@@ -5,3 +5,4 @@ web/.next/
 web/out/
 blog-server
 *.tar.gz
+.worktrees/
