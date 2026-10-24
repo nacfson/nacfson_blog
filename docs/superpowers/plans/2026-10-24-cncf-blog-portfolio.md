@@ -6,13 +6,18 @@
 
 **Architecture:** A single container (`blog-web`, running as `UID 10001` with `readOnlyRootFilesystem: true`) embeds a Go 1.22 stdlib HTTP server (`cmd/blog-server`) and a compiled Next.js static export (`web/out`). Code changes (`web/**`, `cmd/**`, `internal/**`) trigger a multi-arch GHCR Docker build (`Track A`), whereas content changes (`content/**`) skip the Docker build and are synced live every 30s from FluxCD's existing `source-controller` (`GitRepository/nacfson-blog-content` with `ignore: /* !/content/`) into an in-pod `emptyDir` volume (`/var/run/blog-content`) (`Track B`).
 
-**Tech Stack:** Go 1.22 (`net/http`, `archive/tar`, `compress/gzip`, stdlib routing), Next.js 14+ (App Router `output: 'export'`), React 18, TypeScript, Tailwind CSS (Light Theme), Vitest + React Testing Library, FluxCD v2 (`source.toolkit.fluxcd.io/v1`, `kustomize.toolkit.fluxcd.io/v1`), Kubernetes (`restricted` PSS).
+**Tech Stack:** Go 1.22 (`net/http`, `archive/tar`, `compress/gzip`, stdlib routing), Node.js 22 LTS (`node:22-alpine` build stage), TypeScript 5.5 (`ES2022` target), Next.js 14.2 (App Router `output: 'export'`), React 18.3, Tailwind CSS 3.4 (Light Theme), Vitest 2.0 + React Testing Library 16 (`jsdom`), FluxCD v2 (`source.toolkit.fluxcd.io/v1`, `kustomize.toolkit.fluxcd.io/v1`), Kubernetes (`restricted` PSS).
 
 **Spec:** `/home/nacfson/Projects/nacfson_blog/docs/superpowers/specs/2026-10-24-cncf-blog-portfolio-design.md`
 
 ## Global Constraints
 
 - **Go Version & Dependencies**: Go 1.22 stdlib (`net/http`, `archive/tar`, `compress/gzip`, `encoding/json`, `os`, `path/filepath`); zero external HTTP router or web framework dependencies.
+- **JavaScript / TypeScript / Frontend Versions**:
+  - **Build Runtime**: Node.js `>=22.0.0` (`node:22-alpine` in `Dockerfile` Stage 1 and `node-version: '22'` in GitHub Actions).
+  - **Language & Compiler Target**: TypeScript `~5.5.4` compiling to ECMAScript `ES2022` (`target: "ES2022"`, `lib: ["dom", "dom.iterable", "es2022"]`, `module: "esnext"`, `moduleResolution: "bundler"`, `strict: true`).
+  - **UI Framework**: Next.js `14.2.15` (App Router with `output: 'export'` and `images: { unoptimized: true }`), React `18.3.1`, React DOM `18.3.1`.
+  - **Styling & Testing**: Tailwind CSS `3.4.13`, PostCSS `8.4.47`, Autoprefixer `10.4.20`, Vitest `2.1.3`, `@vitejs/plugin-react` `4.3.2`, `@testing-library/react` `16.0.1`, `@testing-library/jest-dom` `6.5.0`, `jsdom` `25.0.1`.
 - **Security Context (`CONTRACT_ISOLATION_BUDGET.md`)**: `runAsNonRoot: true`, `runAsUser: 10001`, `runAsGroup: 10001`, `readOnlyRootFilesystem: true`, `allowPrivilegeEscalation: false`, `capabilities.drop: ["ALL"]`, `seccompProfile.type: RuntimeDefault`, `automountServiceAccountToken: false`.
 - **Strict QoS (`CONTRACT_ISOLATION_BUDGET.md`)**: `requests.cpu == limits.cpu` (`100m`) and `requests.memory == limits.memory` (`128Mi`) on `Deployment/blog-web`.
 - **Auth Door (`CONTRACT_AUTH_DOOR.md`)**: `signIn: "none"`, `IngressRoute` on `entryPoints: ["websecure"]` with `tls: {}`, `Host(\`blog.nacfson.cloud\`)`, middleware `platform/strip-forged-headers`, and no `forward-auth` or `identity` egress.
@@ -555,7 +560,42 @@ git commit -m "feat(server): add Go 1.22 HTTP mux, demo CSP headers, and blog-se
 
 - [ ] **Step 1: Scaffold `web/` configuration and write failing component tests in `web/src/components/__tests__/MarkdownDispatcher.test.tsx`**
 
-Create `web/package.json` (with `next`, `react`, `react-dom`, `tailwindcss`, `vitest`, `@testing-library/react`, `@testing-library/jest-dom`, `jsdom`), `web/next.config.mjs` (`output: 'export'`, `images: { unoptimized: true }`), `web/tsconfig.json`, `web/vitest.config.ts`, and `web/src/components/__tests__/MarkdownDispatcher.test.tsx`:
+Create `web/package.json` with exact pinned versions:
+```json
+{
+  "name": "nacfson-blog-web",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "next": "14.2.15",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "6.5.0",
+    "@testing-library/react": "16.0.1",
+    "@types/node": "22.7.5",
+    "@types/react": "18.3.11",
+    "@types/react-dom": "18.3.1",
+    "@vitejs/plugin-react": "4.3.2",
+    "autoprefixer": "10.4.20",
+    "jsdom": "25.0.1",
+    "postcss": "8.4.47",
+    "tailwindcss": "3.4.13",
+    "typescript": "5.5.4",
+    "vitest": "2.1.3"
+  }
+}
+```
+Create `web/tsconfig.json` (`target: "ES2022"`, `lib: ["dom", "dom.iterable", "es2022"]`, `module: "esnext"`, `moduleResolution: "bundler"`, `jsx: "preserve"`, `strict: true`), `web/next.config.mjs` (`output: 'export'`, `images: { unoptimized: true }`), `web/vitest.config.ts` (`environment: 'jsdom'`), and `web/src/components/__tests__/MarkdownDispatcher.test.tsx`:
 
 ```tsx
 import React from 'react';

@@ -75,7 +75,8 @@ Every manifest for `proj-blog` must pass `scripts/platform-preflight.py`, `scrip
 
 ### 4.2 Frontend Stack
 - **Option 2B — Next.js (App Router) + React + Tailwind CSS (Chosen)**:
-  - *How it works*: Next.js App Router (Light Theme) compiled to static client assets (`output: 'export'` / SPA shell) embedded/served by the Go 1.22 server, paired with a React Markdown AST dispatcher for Kimi-style custom blocks (`scrollHero`, `blogPicture`, `blogIframeTabs`, `benchmarkChart`, `benchmarkTable`).
+  - *Toolchain & Versions*: Built with **Node.js `>=22.0.0`** (`node:22-alpine`), **TypeScript `5.5.4`** targeting **ECMAScript `ES2022`**, **Next.js `14.2.15`** (`output: 'export'`, App Router), **React `18.3.1`** (`react`, `react-dom`), **Tailwind CSS `3.4.13`**, and **Vitest `2.1.3`** (`@testing-library/react` `16.0.1`, `jsdom` `25.0.1`).
+  - *How it works*: Next.js App Router (Light Theme) compiled to static client JS/CSS/HTML assets (`output: 'export'` / SPA shell at `/app/web/out`) embedded/served by the Go 1.22 server, paired with a React client-side Markdown AST dispatcher for Kimi-style custom blocks (`scrollHero`, `blogPicture`, `blogIframeTabs`, `benchmarkChart`, `benchmarkTable`).
   - *Pros*: Matches `kimi.ai/blog` component architecture 1:1 while avoiding a runtime Node.js server process inside the production container.
 - **Option 2A — Astro + React Islands**:
   - *Why not chosen*: Requires Astro build time whenever Markdown changes unless paired with client-side fetching anyway; User selected **2B (Next.js + React + Tailwind)**.
