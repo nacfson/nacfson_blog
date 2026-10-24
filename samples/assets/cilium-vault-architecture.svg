@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 520" width="1200" height="520" font-family="system-ui, -apple-system, sans-serif">
+  <rect width="1200" height="520" rx="16" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
+  <text x="40" y="48" font-size="20" font-weight="800" fill="#0f172a">nacfson_pipeline Zero-Plaintext Data Path (cilium-vault-architecture.svg)</text>
+  <text x="40" y="74" font-size="13" fill="#475569">Rendered from Markdown via ```blogPicture with locked 1200/520 aspect ratio</text>
+
+  <!-- Box 1: Traefik -->
+  <rect x="40" y="120" width="230" height="340" rx="12" fill="#f0f9ff" stroke="#7dd3fc" stroke-width="2" />
+  <text x="60" y="155" font-size="13" font-weight="800" fill="#0369a1">1. EDGE INGRESS (platform)</text>
+  <rect x="60" y="175" width="190" height="95" rx="8" fill="#ffffff" stroke="#bae6fd" />
+  <text x="75" y="205" font-size="15" font-weight="700" fill="#0f172a">Traefik (:443)</text>
+  <text x="75" y="228" font-size="12" fill="#475569">• TLSStore: blog-tls</text>
+  <text x="75" y="248" font-size="12" fill="#475569">• strip-forged-headers</text>
+  <rect x="60" y="290" width="190" height="80" rx="8" fill="#ffffff" stroke="#bae6fd" />
+  <text x="75" y="320" font-size="14" font-weight="700" fill="#0f172a">signIn: none</text>
+  <text x="75" y="342" font-size="12" fill="#15803d">0 Auth Gateway Coupling</text>
+
+  <!-- Arrow 1 -->
+  <path d="M275 260 L325 260" stroke="#0284c7" stroke-width="3" />
+  <polygon points="325,254 338,260 325,266" fill="#0284c7" />
+
+  <!-- Box 2: proj-blog -->
+  <rect x="345" y="120" width="245" height="340" rx="12" fill="#f0fdf4" stroke="#86efac" stroke-width="2" />
+  <text x="365" y="155" font-size="13" font-weight="800" fill="#15803d">2. TENANT POD (proj-blog)</text>
+  <rect x="365" y="175" width="205" height="110" rx="8" fill="#ffffff" stroke="#bbf7d0" />
+  <text x="380" y="205" font-size="15" font-weight="700" fill="#0f172a">blog-app (:8080)</text>
+  <text x="380" y="228" font-size="12" fill="#475569">• UID 10001 (Restricted PSS)</text>
+  <text x="380" y="248" font-size="12" fill="#475569">• liveness: /healthz</text>
+  <text x="380" y="268" font-size="12" fill="#475569">• readiness: /readyz</text>
+  <rect x="365" y="305" width="205" height="75" rx="8" fill="#ffffff" stroke="#bbf7d0" />
+  <text x="380" y="332" font-size="13" font-weight="700" fill="#0f172a">Cilium eBPF Datapath</text>
+  <text x="380" y="354" font-size="12" fill="#475569">L3/L4 NetworkPolicy</text>
+
+  <!-- Arrow 2 -->
+  <path d="M595 260 L645 260" stroke="#0284c7" stroke-width="3" />
+  <polygon points="645,254 658,260 645,266" fill="#0284c7" />
+
+  <!-- Box 3: Vault Boundary -->
+  <rect x="665" y="120" width="235" height="340" rx="12" fill="#fffbeb" stroke="#fcd34d" stroke-width="2" />
+  <text x="685" y="155" font-size="13" font-weight="800" fill="#b45309">3. VAULT BOUNDARY (vault)</text>
+  <rect x="685" y="175" width="195" height="105" rx="8" fill="#ffffff" stroke="#fde68a" />
+  <text x="700" y="205" font-size="15" font-weight="700" fill="#0f172a">vault-db-proxy (:5432)</text>
+  <text x="700" y="228" font-size="12" fill="#475569">Intercepts PGv3 Wire</text>
+  <text x="700" y="248" font-size="11" font-family="monospace" fill="#0369a1">project:blog:workload:backend</text>
+  <rect x="685" y="300" width="195" height="80" rx="8" fill="#ffffff" stroke="#fde68a" />
+  <text x="700" y="328" font-size="14" font-weight="700" fill="#0f172a">OpenBao 2.0.0</text>
+  <text x="700" y="350" font-size="11" font-family="monospace" fill="#b45309">kv/database/blog-user</text>
+
+  <!-- Arrow 3 -->
+  <path d="M905 260 L945 260" stroke="#0284c7" stroke-width="3" />
+  <polygon points="945,254 958,260 945,266" fill="#0284c7" />
+
+  <!-- Box 4: PostgreSQL -->
+  <rect x="965" y="120" width="195" height="340" rx="12" fill="#faf5ff" stroke="#c4b5fd" stroke-width="2" />
+  <text x="982" y="155" font-size="13" font-weight="800" fill="#6d28d9">4. DATABASE (identity)</text>
+  <rect x="982" y="175" width="160" height="195" rx="8" fill="#ffffff" stroke="#ddd6fe" />
+  <text x="996" y="205" font-size="15" font-weight="700" fill="#0f172a">PostgreSQL 16</text>
+  <text x="996" y="232" font-size="12" font-family="monospace" fill="#6d28d9">DB: proj_blog</text>
+  <text x="996" y="252" font-size="12" font-family="monospace" fill="#6d28d9">Role: user_blog</text>
+  <text x="996" y="285" font-size="12" fill="#475569">• posts (JSONB + GIN)</text>
+  <text x="996" y="305" font-size="12" fill="#475569">• portfolio_projects</text>
+  <text x="996" y="325" font-size="12" fill="#475569">• competencies</text>
+  <text x="996" y="345" font-size="12" fill="#475569">• post_revisions</text>
+</svg>

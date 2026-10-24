@@ -1,0 +1,7 @@
+.superpowers/
+node_modules/
+web/node_modules/
+web/.next/
+web/out/
+blog-server
+*.tar.gz
