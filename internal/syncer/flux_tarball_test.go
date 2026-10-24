@@ -336,3 +336,36 @@ func TestFluxTarballSyncer_StagingCleanup(t *testing.T) {
 		t.Fatalf("seed directory was deleted after sync 2: %v", err)
 	}
 }
+
+func TestSyncOnce_NestedContentPath(t *testing.T) {
+	payload := buildTarGz(t, []tar.Header{
+		{Name: "nacfson-blog-main/content/posts/content", Mode: 0o644, Size: 14, Typeflag: tar.TypeReg},
+		{Name: "nacfson-blog-main/content/topics/content/index.md", Mode: 0o644, Size: 5, Typeflag: tar.TypeReg},
+	}, [][]byte{[]byte("nested-content"), []byte("topic")})
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("ETag", `"nested-1"`)
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(payload)
+	}))
+	defer srv.Close()
+
+	workDir := t.TempDir()
+	rel := &mockReloader{}
+	s := syncer.NewFluxTarballSyncer(srv.URL, workDir, rel)
+
+	updated, err := s.SyncOnce(context.Background())
+	if err != nil || !updated {
+		t.Fatalf("expected updated=true, err=%v", err)
+	}
+
+	got, err := os.ReadFile(filepath.Join(s.ActiveContentDir(), "posts", "content"))
+	if err != nil || string(got) != "nested-content" {
+		t.Fatalf("unexpected content file: %q (err=%v)", string(got), err)
+	}
+
+	gotTopic, err := os.ReadFile(filepath.Join(s.ActiveContentDir(), "topics", "content", "index.md"))
+	if err != nil || string(gotTopic) != "topic" {
+		t.Fatalf("unexpected topic file: %q (err=%v)", string(gotTopic), err)
+	}
+}

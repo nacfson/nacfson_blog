@@ -283,9 +283,6 @@ func extractContentPath(name string) (string, bool) {
 	name = filepath.ToSlash(name)
 	name = strings.TrimPrefix(name, "/")
 
-	if name == "content" || strings.HasSuffix(name, "/content") {
-		return ".", true
-	}
 	if strings.HasPrefix(name, "content/") {
 		rel := strings.TrimPrefix(name, "content/")
 		if rel == "" {
@@ -299,6 +296,9 @@ func extractContentPath(name string) (string, bool) {
 			return ".", true
 		}
 		return rel, true
+	}
+	if name == "content" || strings.HasSuffix(name, "/content") {
+		return ".", true
 	}
 	return "", false
 }
