@@ -6,3 +6,5 @@ web/out/
 /blog-server
 *.tar.gz
 .worktrees/
+__pycache__/
+*.pyc

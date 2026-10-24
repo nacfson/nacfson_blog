@@ -95,4 +95,38 @@ describe('MarkdownDispatcher', () => {
     expect(screen.getByText('Direct DB')).toBeDefined();
     expect(screen.getByText('Proxy DB')).toBeDefined();
   });
+
+  it('does not prematurely close a fenced block when inline triple backticks appear inside a JSON string', () => {
+    const md = `
+\`\`\`blogPicture
+{
+  "lightSrc": "/content/assets/cilium-vault-architecture.svg",
+  "alt": "Diagram",
+  "caption": "Rendered via \`\`\`blogPicture with locked aspect ratio"
+}
+\`\`\`
+
+\`\`\`blogIframeTabs
+{
+  "tabs": [
+    {
+      "label": "Live Demo Tab",
+      "panels": [
+        {
+          "type": "iframe",
+          "src": "/content/demos/hubble-flow-sim.html",
+          "poster": "/content/assets/wire-proxy-poster.svg",
+          "interaction": "click-or-center"
+        }
+      ]
+    }
+  ]
+}
+\`\`\`
+`;
+    render(<MarkdownDispatcher markdown={md} />);
+    expect(screen.getByText(/Rendered via \`\`\`blogPicture/)).toBeDefined();
+    expect(screen.getByText('Live Demo Tab')).toBeDefined();
+    expect(screen.getByRole('button', { name: /Launch Interactive Demo/i })).toBeDefined();
+  });
 });

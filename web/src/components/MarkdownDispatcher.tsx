@@ -134,9 +134,9 @@ function renderProseBlock(block: string, key: number | string): React.ReactNode 
 }
 
 export const MarkdownDispatcher: React.FC<MarkdownDispatcherProps> = ({ markdown }) => {
-  // Match code fences ```lang\ncode\n```
+  // Match code fences ```lang\ncode\n``` where closing ``` is on its own line
   // We use regex with capturing groups to tokenize into code blocks and prose chunks
-  const fenceRegex = /```([a-zA-Z0-9_-]*)\r?\n([\s\S]*?)```/g;
+  const fenceRegex = /^```([a-zA-Z0-9_-]*)\r?\n([\s\S]*?)\r?\n```(?=\r?\n|$)/gm;
 
   const elements: React.ReactNode[] = [];
   let lastIndex = 0;

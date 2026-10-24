@@ -5,3 +5,10 @@ web/node_modules
 web/.next
 web/out
 *.tmp
+.agents
+.claude
+.codex
+.omp
+.opencode
+tests
+docs
