@@ -22,6 +22,7 @@ on:
       - "go.mod"
       - "go.sum"
       - "Dockerfile"
+      - ".github/workflows/publish-ghcr-image.yml"
   workflow_dispatch:
 
 permissions:

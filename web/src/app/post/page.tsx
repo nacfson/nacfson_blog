@@ -9,21 +9,31 @@ import { MarkdownDispatcher } from '../../components/MarkdownDispatcher';
 
 function PostContent() {
   const searchParams = useSearchParams();
-  const slug = searchParams.get('slug');
+  const searchSlug = searchParams.get('slug');
 
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let slug = searchSlug;
+    if (!slug && typeof window !== 'undefined') {
+      const match = window.location.pathname.match(/\/post\/([^/?#]+)/);
+      if (match && match[1]) {
+        slug = decodeURIComponent(match[1]);
+      }
+    }
+
     if (!slug) {
       setLoading(false);
-      setError('No post slug specified in query string.');
+      setError('No post slug specified in query string or URL path.');
       return;
     }
 
     setLoading(true);
     setError(null);
+
+    let active = true;
 
     fetch(`/api/posts/${encodeURIComponent(slug)}`)
       .then((res) => {
@@ -34,15 +44,25 @@ function PostContent() {
         return res.json();
       })
       .then((data: Post) => {
-        setPost(data);
+        if (active) {
+          setPost(data);
+        }
       })
       .catch((err: Error) => {
-        setError(err.message);
+        if (active) {
+          setError(err.message);
+        }
       })
       .finally(() => {
-        setLoading(false);
+        if (active) {
+          setLoading(false);
+        }
       });
-  }, [slug]);
+
+    return () => {
+      active = false;
+    };
+  }, [searchSlug]);
 
   if (loading) {
     return (

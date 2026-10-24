@@ -73,14 +73,16 @@ func main() {
 	// If FLUX_ARTIFACT_URL is set, run SyncOnce on startup and start periodic polling
 	if fluxArtifactURL != "" {
 		log.Printf("FLUX_ARTIFACT_URL set to %s; performing initial sync", fluxArtifactURL)
-		syncCtx, syncCancel := context.WithTimeout(serverCtx, 30*time.Second)
-		updated, err := fluxSyncer.SyncOnce(syncCtx)
-		syncCancel()
-		if err != nil {
-			log.Printf("warning: initial artifact sync failed, running with current content: %v", err)
-		} else if updated {
-			log.Printf("initial artifact sync successful, content updated")
-		}
+		func() {
+			syncCtx, syncCancel := context.WithTimeout(serverCtx, 30*time.Second)
+			defer syncCancel()
+			updated, err := fluxSyncer.SyncOnce(syncCtx)
+			if err != nil {
+				log.Printf("warning: initial artifact sync failed, running with current content: %v", err)
+			} else if updated {
+				log.Printf("initial artifact sync successful, content updated")
+			}
+		}()
 
 		fluxSyncer.Start(serverCtx, 30*time.Second)
 	}

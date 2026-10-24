@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/nacfson/nacfson_blog/internal/content"
@@ -72,8 +73,38 @@ func TestFolderStore_RejectsInvalidFrontmatter(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(tmp, "posts", "bad.md"), []byte(badMD), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := content.NewFolderStore(func() string { return tmp }); err == nil {
+	_, err := content.NewFolderStore(func() string { return tmp })
+	if err == nil {
 		t.Fatalf("expected NewFolderStore to fail on invalid frontmatter")
+	}
+	if !strings.Contains(err.Error(), "bad.md") {
+		t.Errorf("expected error message to contain filename bad.md, got %v", err)
+	}
+}
+
+func TestFolderStore_GetPost_TagsSliceIsolation(t *testing.T) {
+	root, err := filepath.Abs("../../content")
+	if err != nil {
+		t.Fatalf("abs path: %v", err)
+	}
+	store, err := content.NewFolderStore(func() string { return root })
+	if err != nil {
+		t.Fatalf("NewFolderStore failed: %v", err)
+	}
+
+	post1, err := store.GetPost(context.Background(), "cilium-zero-plaintext-k3s")
+	if err != nil {
+		t.Fatalf("GetPost failed: %v", err)
+	}
+	origCount := len(post1.Tags)
+	post1.Tags = append(post1.Tags, "MutatedTag")
+
+	post2, err := store.GetPost(context.Background(), "cilium-zero-plaintext-k3s")
+	if err != nil {
+		t.Fatalf("GetPost failed: %v", err)
+	}
+	if len(post2.Tags) != origCount {
+		t.Fatalf("modifying returned tags slice mutated the store: expected %d, got %d", origCount, len(post2.Tags))
 	}
 }
 

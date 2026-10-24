@@ -19,6 +19,7 @@ export default function HomePage() {
 
   // Fetch posts when selectedPillar changes
   useEffect(() => {
+    let active = true;
     setLoadingPosts(true);
     const query = selectedPillar !== 'all' ? `?pillar=${selectedPillar}` : '';
     fetch(`/api/posts${query}`)
@@ -27,13 +28,24 @@ export default function HomePage() {
         return res.json();
       })
       .then((data: PostSummary[]) => {
-        setPosts(data || []);
+        if (active) {
+          setPosts(data || []);
+        }
       })
       .catch((err) => {
-        console.warn('Failed to load posts from /api/posts:', err);
-        setPosts([]);
+        if (active) {
+          console.warn('Failed to load posts from /api/posts:', err);
+          setPosts([]);
+        }
       })
-      .finally(() => setLoadingPosts(false));
+      .finally(() => {
+        if (active) {
+          setLoadingPosts(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
   }, [selectedPillar]);
 
   // Fetch competency matrix once

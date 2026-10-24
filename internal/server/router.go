@@ -159,6 +159,11 @@ func NewHandler(store content.ContentStore, activeContentDir func() string, webO
 			return
 		}
 		reqPath := r.URL.Path
+		if strings.HasPrefix(reqPath, "/api/") || reqPath == "/api" ||
+			strings.HasPrefix(reqPath, "/content/") || reqPath == "/content" {
+			http.NotFound(w, r)
+			return
+		}
 		cleanRel := filepath.Clean(strings.TrimPrefix(reqPath, "/"))
 		if strings.HasPrefix(cleanRel, "..") || filepath.IsAbs(cleanRel) {
 			http.Error(w, "invalid path", http.StatusBadRequest)

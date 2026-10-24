@@ -147,6 +147,9 @@ func (s *FolderStore) GetPost(ctx context.Context, slug string) (*Post, error) {
 	}
 
 	postCopy := post
+	if post.Tags != nil {
+		postCopy.Tags = append([]string(nil), post.Tags...)
+	}
 	return &postCopy, nil
 }
 
@@ -298,23 +301,23 @@ func parseFrontmatter(fm, filename string) (*PostSummary, error) {
 
 	// Validation
 	if summary.Slug == "" {
-		return nil, fmt.Errorf("slug is required in post frontmatter")
+		return nil, fmt.Errorf("%s: slug is required in post frontmatter", filename)
 	}
 	if !isValidSlug(summary.Slug) {
-		return nil, fmt.Errorf("invalid slug %q: %w", summary.Slug, ErrInvalidSlug)
+		return nil, fmt.Errorf("%s: invalid slug %q: %w", filename, summary.Slug, ErrInvalidSlug)
 	}
 	if summary.Title == "" {
-		return nil, fmt.Errorf("title is required in post frontmatter")
+		return nil, fmt.Errorf("%s: title is required in post frontmatter", filename)
 	}
 	if summary.Date == "" {
-		return nil, fmt.Errorf("date is required in post frontmatter")
+		return nil, fmt.Errorf("%s: date is required in post frontmatter", filename)
 	}
 	switch summary.Pillar {
 	case PillarProjectUpdates, PillarCompetencyGrowth, PillarTechOpinions:
 		// valid
 	default:
-		return nil, fmt.Errorf("invalid pillar %q: must be one of %s, %s, %s",
-			summary.Pillar, PillarProjectUpdates, PillarCompetencyGrowth, PillarTechOpinions)
+		return nil, fmt.Errorf("%s: invalid pillar %q: must be one of %s, %s, %s",
+			filename, summary.Pillar, PillarProjectUpdates, PillarCompetencyGrowth, PillarTechOpinions)
 	}
 
 	return summary, nil

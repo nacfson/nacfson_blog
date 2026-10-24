@@ -9,7 +9,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: ReadageProps<{ children: React.ReactNode }>) {
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" className="bg-[#f8fafc] text-slate-900">
       <body className="min-h-screen flex flex-col bg-[#f8fafc]">

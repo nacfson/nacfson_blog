@@ -9,7 +9,7 @@ RUN npm run build
 # Stage 2: Build Go blog-server binary
 FROM golang:1.22-alpine AS go-builder
 WORKDIR /work
-COPY go.mod ./
+COPY go.mod go.sum* ./
 COPY cmd/ ./cmd/
 COPY internal/ ./internal/
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/blog-server ./cmd/blog-server

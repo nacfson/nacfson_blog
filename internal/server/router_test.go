@@ -188,4 +188,18 @@ func TestRouter_NotFoundAndInvalidRequests(t *testing.T) {
 	if rec.Code != http.StatusNotFound {
 		t.Errorf("expected 404 for missing demo, got %d", rec.Code)
 	}
+
+	// Unmatched /api path should return 404 instead of falling back to SPA index.html
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/nonexistent", nil))
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("expected 404 for /api/nonexistent, got %d", rec.Code)
+	}
+
+	// Unmatched /content path should return 404 instead of falling back to SPA index.html
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/content/assets/nonexistent.svg", nil))
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("expected 404 for /content/assets/nonexistent.svg, got %d", rec.Code)
+	}
 }

@@ -4,8 +4,10 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -271,7 +273,9 @@ func (s *FluxTarballSyncer) Start(ctx context.Context, interval time.Duration) {
 			case <-ctx.Done():
 				return
 			case <-ticker.C:
-				_, _ = s.SyncOnce(ctx)
+				if _, err := s.SyncOnce(ctx); err != nil && !errors.Is(err, context.Canceled) {
+					log.Printf("flux syncer periodic update error: %v", err)
+				}
 			}
 		}
 	}()

@@ -12,7 +12,7 @@ export const BenchmarkChart: React.FC<BenchmarkChartProps> = ({ data }) => {
 
   const hasTabs = data.tabs && data.tabs.length > 0;
   const currentTab = hasTabs ? data.tabs![activeTabIdx] : null;
-  const series: BenchmarkSeriesItem[] = currentTab ? currentTab.series : data.series || [];
+  const series: BenchmarkSeriesItem[] = (currentTab?.series || data.series) || [];
   const unit = (currentTab?.unit || data.unit) || '';
 
   const maxValue = Math.max(...series.map((s) => s.value), 1);
