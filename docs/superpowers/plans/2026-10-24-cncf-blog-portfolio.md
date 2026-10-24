@@ -8,7 +8,7 @@
 
 **Tech Stack:** Go 1.22 (`net/http`, `archive/tar`, `compress/gzip`, stdlib routing), Node.js 22 LTS (`node:22-alpine` build stage), TypeScript 5.5 (`ES2022` target), Next.js 14.2 (App Router `output: 'export'`), React 18.3, Tailwind CSS 3.4 (Light Theme), Vitest 2.0 + React Testing Library 16 (`jsdom`), FluxCD v2 (`source.toolkit.fluxcd.io/v1`, `kustomize.toolkit.fluxcd.io/v1`), Kubernetes (`restricted` PSS).
 
-**Spec:** `/home/nacfson/Projects/nacfson_blog/docs/superpowers/specs/2026-10-24-cncf-blog-portfolio-design.md`
+**Spec:** `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/docs/superpowers/specs/2026-10-24-cncf-blog-portfolio-design.md`
 
 ## Global Constraints
 
@@ -36,7 +36,7 @@
 
 ## File Structure
 
-### Repository 1: `/home/nacfson/Projects/nacfson_blog`
+### Repository 1: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog`
 - `go.mod` — Go 1.22 module definition (`github.com/nacfson/nacfson_blog`).
 - `content/competencies/matrix.json` — Seed competency matrix across CNCF/Kubernetes, Security, and Systems engineering.
 - `content/posts/2026-10-24-cilium-zero-plaintext-k3s.md` — Initial production post (promoted from `samples/`).
@@ -64,7 +64,7 @@
 - `Dockerfile` — 3-stage container build (`node:22-alpine` -> `golang:1.22-alpine` -> `alpine:3.20` non-root `10001:10001`).
 - `.github/workflows/publish-ghcr-image.yml` — Track A CI workflow building and pushing `ghcr.io/nacfson/blog-web` only on code/build path changes.
 
-### Repository 2: `/home/nacfson/Projects/nacfson_pipeline`
+### Repository 2: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog`
 - `clusters/local-k3s/flux-system/gotk-sync.yaml` & `clusters/vps-k3s/flux-system/gotk-sync.yaml` — Add `GitRepository/nacfson-blog-content` (`ignore: /* !/content/`).
 - `deploy/projects/blog/boundary/{kustomization.yaml,namespace.yaml,sign-in.yaml,service-account.yaml,reconciler-rbac.yaml,resource-quota.yaml,network-policy.yaml}` — Tenant boundary for `proj-blog`.
 - `deploy/projects/blog/workloads/{kustomization.yaml,deployment.yaml,services.yaml,ingress-route.yaml}` — Single-pod `blog-web` workload manifests.
@@ -79,14 +79,14 @@
 ### Task 1: Go `ContentStore`, `FolderStore` & Seed Content (`internal/content/`)
 
 **Files:**
-- Create: `/home/nacfson/Projects/nacfson_blog/go.mod`
-- Create: `/home/nacfson/Projects/nacfson_blog/content/competencies/matrix.json`
-- Create: `/home/nacfson/Projects/nacfson_blog/content/posts/2026-10-24-cilium-zero-plaintext-k3s.md` (copied from `samples/`, updating `/files/` paths to `/content/assets/` and `/content/demos/`)
-- Create: `/home/nacfson/Projects/nacfson_blog/content/assets/` (copied from `samples/assets/*.svg`)
-- Create: `/home/nacfson/Projects/nacfson_blog/content/demos/hubble-flow-sim.html` (copied from `samples/demos/hubble-flow-sim.html`)
-- Create: `/home/nacfson/Projects/nacfson_blog/internal/content/store.go`
-- Create: `/home/nacfson/Projects/nacfson_blog/internal/content/folder_store.go`
-- Test: `/home/nacfson/Projects/nacfson_blog/internal/content/folder_store_test.go`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/go.mod`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/content/competencies/matrix.json`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/content/posts/2026-10-24-cilium-zero-plaintext-k3s.md` (copied from `samples/`, updating `/files/` paths to `/content/assets/` and `/content/demos/`)
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/content/assets/` (copied from `samples/assets/*.svg`)
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/content/demos/hubble-flow-sim.html` (copied from `samples/demos/hubble-flow-sim.html`)
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/internal/content/store.go`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/internal/content/folder_store.go`
+- Test: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/internal/content/folder_store_test.go`
 
 **Interfaces:**
 - Consumes: none (foundational package)
@@ -102,7 +102,7 @@
 
 - [ ] **Step 1: Initialize `go.mod`, seed `content/` from `samples/`, and write failing `FolderStore` unit tests**
 
-Create `/home/nacfson/Projects/nacfson_blog/go.mod` (`module github.com/nacfson/nacfson_blog`, `go 1.22`), copy `samples/assets/*.svg` to `content/assets/`, copy `samples/demos/hubble-flow-sim.html` to `content/demos/`, copy `samples/2026-10-24-cilium-zero-plaintext-k3s.md` to `content/posts/2026-10-24-cilium-zero-plaintext-k3s.md` (replacing `/files/hubble-flow-sim.html` with `/content/demos/hubble-flow-sim.html` and `/files/` SVG URLs with `/content/assets/`), and create `content/competencies/matrix.json`. Then write `/home/nacfson/Projects/nacfson_blog/internal/content/folder_store_test.go`:
+Create `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/go.mod` (`module github.com/nacfson/nacfson_blog`, `go 1.22`), copy `samples/assets/*.svg` to `content/assets/`, copy `samples/demos/hubble-flow-sim.html` to `content/demos/`, copy `samples/2026-10-24-cilium-zero-plaintext-k3s.md` to `content/posts/2026-10-24-cilium-zero-plaintext-k3s.md` (replacing `/files/hubble-flow-sim.html` with `/content/demos/hubble-flow-sim.html` and `/files/` SVG URLs with `/content/assets/`), and create `content/competencies/matrix.json`. Then write `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/internal/content/folder_store_test.go`:
 
 ```go
 package content_test
@@ -211,8 +211,8 @@ git commit -m "feat(content): add FolderStore ContentStore implementation and se
 ### Task 2: Flux Tarball Live Syncer (`internal/syncer/flux_tarball.go`)
 
 **Files:**
-- Create: `/home/nacfson/Projects/nacfson_blog/internal/syncer/flux_tarball.go`
-- Test: `/home/nacfson/Projects/nacfson_blog/internal/syncer/flux_tarball_test.go`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/internal/syncer/flux_tarball.go`
+- Test: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/internal/syncer/flux_tarball_test.go`
 
 **Interfaces:**
 - Consumes: `Reload() error` (satisfied by `*content.FolderStore`)
@@ -397,9 +397,9 @@ git commit -m "feat(syncer): add Flux source-controller tarball syncer with zip-
 ### Task 3: Go 1.22 HTTP Server & Binary Entrypoint (`internal/server/`, `cmd/blog-server/`)
 
 **Files:**
-- Create: `/home/nacfson/Projects/nacfson_blog/internal/server/router.go`
-- Create: `/home/nacfson/Projects/nacfson_blog/cmd/blog-server/main.go`
-- Test: `/home/nacfson/Projects/nacfson_blog/internal/server/router_test.go`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/internal/server/router.go`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/cmd/blog-server/main.go`
+- Test: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/internal/server/router_test.go`
 
 **Interfaces:**
 - Consumes: `content.ContentStore`, `content.ErrPostNotFound`, `content.ErrInvalidSlug`, `syncer.NewFluxTarballSyncer`
@@ -534,29 +534,29 @@ git commit -m "feat(server): add Go 1.22 HTTP mux, demo CSP headers, and blog-se
 ### Task 4: Next.js Light-Theme UI & Kimi-Style Markdown Block Dispatcher (`web/`)
 
 **Files:**
-- Create: `/home/nacfson/Projects/nacfson_blog/web/package.json`
-- Create: `/home/nacfson/Projects/nacfson_blog/web/next.config.mjs`
-- Create: `/home/nacfson/Projects/nacfson_blog/web/tsconfig.json`
-- Create: `/home/nacfson/Projects/nacfson_blog/web/tailwind.config.ts`
-- Create: `/home/nacfson/Projects/nacfson_blog/web/postcss.config.mjs`
-- Create: `/home/nacfson/Projects/nacfson_blog/web/vitest.config.ts`
-- Create: `/home/nacfson/Projects/nacfson_blog/web/src/lib/types.ts`
-- Create: `/home/nacfson/Projects/nacfson_blog/web/src/components/BlogV2AnimatedHero.tsx`
-- Create: `/home/nacfson/Projects/nacfson_blog/web/src/components/BlogV2MiniNav.tsx`
-- Create: `/home/nacfson/Projects/nacfson_blog/web/src/components/blocks/BlogPicture.tsx`
-- Create: `/home/nacfson/Projects/nacfson_blog/web/src/components/blocks/BlogIframeTabs.tsx`
-- Create: `/home/nacfson/Projects/nacfson_blog/web/src/components/blocks/BenchmarkChart.tsx`
-- Create: `/home/nacfson/Projects/nacfson_blog/web/src/components/blocks/BenchmarkTable.tsx`
-- Create: `/home/nacfson/Projects/nacfson_blog/web/src/components/MarkdownDispatcher.tsx`
-- Create: `/home/nacfson/Projects/nacfson_blog/web/src/app/globals.css`
-- Create: `/home/nacfson/Projects/nacfson_blog/web/src/app/layout.tsx`
-- Create: `/home/nacfson/Projects/nacfson_blog/web/src/app/page.tsx`
-- Create: `/home/nacfson/Projects/nacfson_blog/web/src/app/post/page.tsx`
-- Test: `/home/nacfson/Projects/nacfson_blog/web/src/components/__tests__/MarkdownDispatcher.test.tsx`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/web/package.json`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/web/next.config.mjs`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/web/tsconfig.json`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/web/tailwind.config.ts`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/web/postcss.config.mjs`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/web/vitest.config.ts`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/web/src/lib/types.ts`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/web/src/components/BlogV2AnimatedHero.tsx`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/web/src/components/BlogV2MiniNav.tsx`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/web/src/components/blocks/BlogPicture.tsx`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/web/src/components/blocks/BlogIframeTabs.tsx`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/web/src/components/blocks/BenchmarkChart.tsx`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/web/src/components/blocks/BenchmarkTable.tsx`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/web/src/components/MarkdownDispatcher.tsx`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/web/src/app/globals.css`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/web/src/app/layout.tsx`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/web/src/app/page.tsx`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/web/src/app/post/page.tsx`
+- Test: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/web/src/components/__tests__/MarkdownDispatcher.test.tsx`
 
 **Interfaces:**
 - Consumes: HTTP JSON endpoints from Task 3 (`GET /api/posts`, `GET /api/posts/{slug}`, `GET /api/competencies`)
-- Produces: Static Next.js export at `/home/nacfson/Projects/nacfson_blog/web/out` (`index.html`, `post/index.html`, `_next/static/...`)
+- Produces: Static Next.js export at `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/web/out` (`index.html`, `post/index.html`, `_next/static/...`)
 
 - [ ] **Step 1: Scaffold `web/` configuration and write failing component tests in `web/src/components/__tests__/MarkdownDispatcher.test.tsx`**
 
@@ -667,7 +667,7 @@ describe('MarkdownDispatcher', () => {
 
 - [ ] **Step 2: Install `web/` dependencies and run Vitest to verify it fails**
 
-Run: `cd /home/nacfson/Projects/nacfson_blog/web && npm install && npx vitest run`
+Run: `cd /home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/web && npm install && npx vitest run`
 Expected: FAIL (`Failed to resolve import "../MarkdownDispatcher"`)
 
 - [ ] **Step 3: Implement the Kimi-style Light-Theme components and Next.js pages in `web/src/`**
@@ -681,7 +681,7 @@ Implement:
 
 - [ ] **Step 4: Run Vitest unit tests and Next.js static export build**
 
-Run: `cd /home/nacfson/Projects/nacfson_blog/web && npx vitest run && npm run build && ls -la out/index.html out/post/index.html`
+Run: `cd /home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/web && npx vitest run && npm run build && ls -la out/index.html out/post/index.html`
 Expected: PASS (2 Vitest tests pass; `next build` exports `out/index.html` and `out/post/index.html`)
 
 - [ ] **Step 5: Commit**
@@ -696,9 +696,9 @@ git commit -m "feat(web): add Light-Theme Next.js UI and Kimi-style Markdown blo
 ### Task 5: Dual-Track Container Build (`Dockerfile` + `.github/workflows/publish-ghcr-image.yml`)
 
 **Files:**
-- Create: `/home/nacfson/Projects/nacfson_blog/Dockerfile`
-- Create: `/home/nacfson/Projects/nacfson_blog/.github/workflows/publish-ghcr-image.yml`
-- Test: `/home/nacfson/Projects/nacfson_blog/internal/server/dual_track_ci_test.go`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/Dockerfile`
+- Create: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/.github/workflows/publish-ghcr-image.yml`
+- Test: `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/internal/server/dual_track_ci_test.go`
 
 **Interfaces:**
 - Consumes: `cmd/blog-server`, `web/`, `content/`
@@ -756,7 +756,7 @@ Expected: FAIL (`missing workflow file`)
 
 - [ ] **Step 3: Create `Dockerfile` and `.github/workflows/publish-ghcr-image.yml`**
 
-Create `/home/nacfson/Projects/nacfson_blog/Dockerfile` (Stage 1 `node:22-alpine` builds `/work/web/out`; Stage 2 `golang:1.22-alpine` builds `CGO_ENABLED=0 /out/blog-server`; Stage 3 `alpine:3.20` copies `ca-certificates`, `/app/blog-server`, `/app/web/out`, `/app/seed-content`, sets `USER 10001:10001`, `EXPOSE 8080`, `ENTRYPOINT ["/app/blog-server"]`) and `.github/workflows/publish-ghcr-image.yml` matching Section 5.4 of the design spec.
+Create `/home/nacfson/Projects/nacfson_blog/.worktrees/feat-cncf-blog/Dockerfile` (Stage 1 `node:22-alpine` builds `/work/web/out`; Stage 2 `golang:1.22-alpine` builds `CGO_ENABLED=0 /out/blog-server`; Stage 3 `alpine:3.20` copies `ca-certificates`, `/app/blog-server`, `/app/web/out`, `/app/seed-content`, sets `USER 10001:10001`, `EXPOSE 8080`, `ENTRYPOINT ["/app/blog-server"]`) and `.github/workflows/publish-ghcr-image.yml` matching Section 5.4 of the design spec.
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -774,31 +774,31 @@ git commit -m "ci(docker): add multi-stage UID 10001 Dockerfile and path-filtere
 
 ### Task 6: `nacfson_pipeline` Unified FluxCD & `proj-blog` Manifests
 
-**Files (in `/home/nacfson/Projects/nacfson_pipeline`):**
-- Modify: `/home/nacfson/Projects/nacfson_pipeline/clusters/local-k3s/flux-system/gotk-sync.yaml`
-- Modify: `/home/nacfson/Projects/nacfson_pipeline/clusters/vps-k3s/flux-system/gotk-sync.yaml`
-- Create: `/home/nacfson/Projects/nacfson_pipeline/deploy/projects/blog/boundary/kustomization.yaml`
-- Create: `/home/nacfson/Projects/nacfson_pipeline/deploy/projects/blog/boundary/namespace.yaml`
-- Create: `/home/nacfson/Projects/nacfson_pipeline/deploy/projects/blog/boundary/sign-in.yaml`
-- Create: `/home/nacfson/Projects/nacfson_pipeline/deploy/projects/blog/boundary/service-account.yaml`
-- Create: `/home/nacfson/Projects/nacfson_pipeline/deploy/projects/blog/boundary/reconciler-rbac.yaml`
-- Create: `/home/nacfson/Projects/nacfson_pipeline/deploy/projects/blog/boundary/resource-quota.yaml`
-- Create: `/home/nacfson/Projects/nacfson_pipeline/deploy/projects/blog/boundary/network-policy.yaml`
-- Create: `/home/nacfson/Projects/nacfson_pipeline/deploy/projects/blog/workloads/kustomization.yaml`
-- Create: `/home/nacfson/Projects/nacfson_pipeline/deploy/projects/blog/workloads/deployment.yaml`
-- Create: `/home/nacfson/Projects/nacfson_pipeline/deploy/projects/blog/workloads/services.yaml`
-- Create: `/home/nacfson/Projects/nacfson_pipeline/deploy/projects/blog/workloads/ingress-route.yaml`
-- Modify: `/home/nacfson/Projects/nacfson_pipeline/deploy/platform/governance/manual-change-policy.yaml`
-- Modify: `/home/nacfson/Projects/nacfson_pipeline/deploy/platform/governance/base-network-policy.yaml`
-- Modify: `/home/nacfson/Projects/nacfson_pipeline/deploy/platform/tls/certificates.yaml`
-- Modify: `/home/nacfson/Projects/nacfson_pipeline/deploy/platform/tls/tls-store.yaml`
-- Modify: `/home/nacfson/Projects/nacfson_pipeline/clusters/local-k3s/layers.yaml`
-- Modify: `/home/nacfson/Projects/nacfson_pipeline/clusters/vps-k3s/layers.yaml`
-- Create: `/home/nacfson/Projects/nacfson_pipeline/clusters/local-k3s/projects/proj-blog.yaml`
-- Create: `/home/nacfson/Projects/nacfson_pipeline/clusters/vps-k3s/projects/proj-blog.yaml`
-- Modify: `/home/nacfson/Projects/nacfson_pipeline/clusters/local-k3s/projects/kustomization.yaml`
-- Modify: `/home/nacfson/Projects/nacfson_pipeline/clusters/vps-k3s/projects/kustomization.yaml`
-- Modify: `/home/nacfson/Projects/nacfson_pipeline/scripts/render-invariants.py:119-130`
+**Files (in `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog`):**
+- Modify: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/clusters/local-k3s/flux-system/gotk-sync.yaml`
+- Modify: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/clusters/vps-k3s/flux-system/gotk-sync.yaml`
+- Create: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/deploy/projects/blog/boundary/kustomization.yaml`
+- Create: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/deploy/projects/blog/boundary/namespace.yaml`
+- Create: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/deploy/projects/blog/boundary/sign-in.yaml`
+- Create: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/deploy/projects/blog/boundary/service-account.yaml`
+- Create: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/deploy/projects/blog/boundary/reconciler-rbac.yaml`
+- Create: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/deploy/projects/blog/boundary/resource-quota.yaml`
+- Create: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/deploy/projects/blog/boundary/network-policy.yaml`
+- Create: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/deploy/projects/blog/workloads/kustomization.yaml`
+- Create: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/deploy/projects/blog/workloads/deployment.yaml`
+- Create: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/deploy/projects/blog/workloads/services.yaml`
+- Create: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/deploy/projects/blog/workloads/ingress-route.yaml`
+- Modify: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/deploy/platform/governance/manual-change-policy.yaml`
+- Modify: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/deploy/platform/governance/base-network-policy.yaml`
+- Modify: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/deploy/platform/tls/certificates.yaml`
+- Modify: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/deploy/platform/tls/tls-store.yaml`
+- Modify: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/clusters/local-k3s/layers.yaml`
+- Modify: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/clusters/vps-k3s/layers.yaml`
+- Create: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/clusters/local-k3s/projects/proj-blog.yaml`
+- Create: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/clusters/vps-k3s/projects/proj-blog.yaml`
+- Modify: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/clusters/local-k3s/projects/kustomization.yaml`
+- Modify: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/clusters/vps-k3s/projects/kustomization.yaml`
+- Modify: `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/scripts/render-invariants.py:119-130`
 
 **Interfaces:**
 - Consumes: `nacfson_pipeline` platform contracts (`CONTRACT_AUTH_DOOR.md`, `CONTRACT_ISOLATION_BUDGET.md`, `CONTRACT_TLS_INGRESS.md`, `CONTRACT_PROBES_READINESS.md`)
@@ -806,11 +806,11 @@ git commit -m "ci(docker): add multi-stage UID 10001 Dockerfile and path-filtere
 
 - [ ] **Step 1: Add `Namespace/proj-blog` requirement to `scripts/render-invariants.py` and verify render-validate fails before manifests exist**
 
-In `/home/nacfson/Projects/nacfson_pipeline/scripts/render-invariants.py` (line 125), add `("Namespace", "proj-blog", "kustomize.toolkit.fluxcd.io/prune", "disabled")` to `required_annotations`.
+In `/home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog/scripts/render-invariants.py` (line 125), add `("Namespace", "proj-blog", "kustomize.toolkit.fluxcd.io/prune", "disabled")` to `required_annotations`.
 
 - [ ] **Step 2: Run `render-validate.sh` to verify it fails on missing `Namespace/proj-blog`**
 
-Run: `cd /home/nacfson/Projects/nacfson_pipeline && ./scripts/render-validate.sh local-k3s`
+Run: `cd /home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog && ./scripts/render-validate.sh local-k3s`
 Expected: FAIL (`Invariant 5 violation: Missing required annotation kustomize.toolkit.fluxcd.io/prune: disabled on Namespace/proj-blog`)
 
 - [ ] **Step 3: Create `deploy/projects/blog/{boundary,workloads}` and update Flux/TLS/Governance manifests**
@@ -838,7 +838,7 @@ Expected: FAIL (`Invariant 5 violation: Missing required annotation kustomize.to
 
 Run:
 ```bash
-cd /home/nacfson/Projects/nacfson_pipeline
+cd /home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog
 R_LOCAL=$(./scripts/render-validate.sh local-k3s)
 python3 ./scripts/platform-preflight.py --environment local-k3s --candidate "$R_LOCAL" --capacity clusters/local-k3s/capacity.yaml
 rm -f "$R_LOCAL"
@@ -851,7 +851,7 @@ Expected: PASS (`All render invariants passed successfully` and `Platform Prefli
 - [ ] **Step 5: Commit in `nacfson_pipeline`**
 
 ```bash
-cd /home/nacfson/Projects/nacfson_pipeline
+cd /home/nacfson/Projects/nacfson_pipeline/.worktrees/feat-proj-blog
 git add clusters/ deploy/ scripts/render-invariants.py
 git commit -m "feat(proj-blog): onboard proj-blog tenant and unified Flux content GitRepository"
 ```
