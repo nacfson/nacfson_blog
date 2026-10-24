@@ -155,3 +155,62 @@ func TestFolderStore_ConcurrentAccessAndReload(t *testing.T) {
 	}
 }
 
+func TestFolderStore_CompetencyMatrixCachingAndValidation(t *testing.T) {
+	tmp := t.TempDir()
+	postsDir := filepath.Join(tmp, "posts")
+	compDir := filepath.Join(tmp, "competencies")
+	if err := os.MkdirAll(postsDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(compDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	postMD := "---\ntitle: \"Sample\"\nslug: \"sample\"\ndate: \"2026-10-24\"\npillar: \"tech-opinions\"\n---\nBody\n"
+	if err := os.WriteFile(filepath.Join(postsDir, "sample.md"), []byte(postMD), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	matrixPath := filepath.Join(compDir, "matrix.json")
+	if err := os.WriteFile(matrixPath, []byte(`{"domains":[]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	store, err := content.NewFolderStore(func() string { return tmp })
+	if err != nil {
+		t.Fatalf("NewFolderStore: %v", err)
+	}
+
+	// 1. Initial read succeeds
+	data, err := store.GetCompetencyMatrix(context.Background())
+	if err != nil || string(data) != `{"domains":[]}` {
+		t.Fatalf("expected matrix data, got err=%v data=%s", err, string(data))
+	}
+
+	// 2. Remove file from disk; GetCompetencyMatrix should still serve from in-memory cache
+	if err := os.Remove(matrixPath); err != nil {
+		t.Fatal(err)
+	}
+	cachedData, err := store.GetCompetencyMatrix(context.Background())
+	if err != nil || string(cachedData) != `{"domains":[]}` {
+		t.Fatalf("expected cached matrix data after file deletion, got err=%v", err)
+	}
+
+	// 3. Reload after deletion records error on GetCompetencyMatrix without failing Reload
+	if err := store.Reload(); err != nil {
+		t.Fatalf("Reload should not fail when matrix.json is missing: %v", err)
+	}
+	if _, err := store.GetCompetencyMatrix(context.Background()); err == nil {
+		t.Fatalf("expected error from GetCompetencyMatrix when matrix.json is missing")
+	}
+
+	// 4. Reload with invalid JSON fails
+	if err := os.WriteFile(matrixPath, []byte(`{ not valid json `), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Reload(); err == nil {
+		t.Fatalf("expected Reload to fail on invalid matrix JSON")
+	}
+}
+
+

@@ -2,6 +2,7 @@ package content
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -18,6 +19,8 @@ type FolderStore struct {
 	mu         sync.RWMutex
 	posts      map[string]Post
 	summaries  []PostSummary
+	matrixData []byte
+	matrixErr  error
 }
 
 // Compile-time check that FolderStore implements ContentStore.
@@ -86,10 +89,26 @@ func (s *FolderStore) Reload() error {
 		return newSummaries[i].Slug < newSummaries[j].Slug
 	})
 
+	// Load and cache competency matrix in memory if present.
+	// If missing, do not fail Reload(), but record matrixErr so GetCompetencyMatrix returns it.
+	var newMatrixData []byte
+	var newMatrixErr error
+	matrixPath := filepath.Join(root, "competencies", "matrix.json")
+	data, err := os.ReadFile(matrixPath)
+	if err != nil {
+		newMatrixErr = fmt.Errorf("read competency matrix %s: %w", matrixPath, err)
+	} else if !json.Valid(data) {
+		return fmt.Errorf("invalid competency matrix JSON in %s", matrixPath)
+	} else {
+		newMatrixData = data
+	}
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.posts = newPosts
 	s.summaries = newSummaries
+	s.matrixData = newMatrixData
+	s.matrixErr = newMatrixErr
 
 	return nil
 }
@@ -131,18 +150,18 @@ func (s *FolderStore) GetPost(ctx context.Context, slug string) (*Post, error) {
 	return &postCopy, nil
 }
 
-// GetCompetencyMatrix returns the raw JSON content of matrix.json.
+// GetCompetencyMatrix returns the raw JSON content of matrix.json served from in-memory cache.
 func (s *FolderStore) GetCompetencyMatrix(ctx context.Context) ([]byte, error) {
 	s.mu.RLock()
-	root := s.activeRoot()
-	s.mu.RUnlock()
+	defer s.mu.RUnlock()
 
-	matrixPath := filepath.Join(root, "competencies", "matrix.json")
-	data, err := os.ReadFile(matrixPath)
-	if err != nil {
-		return nil, fmt.Errorf("read competency matrix %s: %w", matrixPath, err)
+	if s.matrixErr != nil {
+		return nil, s.matrixErr
 	}
-	return data, nil
+
+	cp := make([]byte, len(s.matrixData))
+	copy(cp, s.matrixData)
+	return cp, nil
 }
 
 // hasTag checks whether any tag matches target case-insensitively.
