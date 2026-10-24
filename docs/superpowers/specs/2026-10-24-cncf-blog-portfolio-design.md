@@ -30,7 +30,9 @@ Inspired by frontier AI technical blogs (`https://www.kimi.ai/blog/kimi-k3-1-pro
 - **Single-Pod Tenant Deployment (`blog-web`)**: Run the entire blog (Next.js UI + Go 1.22 HTTP server + live-synced content directory) in **1 single pod** inside `namespace: proj-blog` with a minimal resource footprint (`requests == limits`, e.g., `100m` CPU, `128Mi` RAM).
 - **Public Read-Only Door (`signIn: none`)**: Comply with `nacfson_pipeline/contracts/CONTRACT_AUTH_DOOR.md` using `signIn: none` so visitors can read articles without a Keycloak login wall while `strip-forged-headers` protects the ingress route.
 - **GitOps Folder Mode (`STORAGE_MODE=folder`) Behind `ContentStore`**: Store all posts (`content/posts/*.md`), diagrams (`content/assets/*`), interactive HTML demos (`content/demos/*.html`), and competency metadata (`content/competencies/matrix.json`) directly in Git behind a clean Go `ContentStore` interface so a future database adapter (`STORAGE_MODE=db`) can be added without touching UI or HTTP handler code.
-- **Unified FluxCD Zero-Image-Rebuild Content Sync**: Reuse the cluster's **single existing `flux-system` (`source-controller`)** to watch `github.com/nacfson/nacfson_blog` with `spec.ignore: /* !/content/`. When a new `.md` post, `.svg` diagram, or `.html` demo is pushed to `content/**`, GitHub Actions skips the Docker image build (`paths: ['web/**', 'cmd/**', 'Dockerfile']`), and `blog-web` pulls the updated `.tar.gz` artifact from `source-controller` over internal ClusterIP into a writable `emptyDir` volume (`/var/run/blog-content/`) in ~30 seconds with **zero Docker image rebuild and zero pod restart**.
+- **Unified Dual-Track Delivery (Track A for Features/Code vs. Track B for Content)**:
+  - **Track A — Feature, UI & Server Code Updates (`web/**`, `cmd/**`, `internal/**`, `Dockerfile`)**: Triggers the GitHub Actions multi-arch (`linux/amd64,linux/arm64`) Docker build pipeline (`.github/workflows/publish-ghcr-image.yml`), runs quality gates (Go tests + Next.js static export), publishes `ghcr.io/nacfson/blog-web` to GHCR, and rolls out the new immutable `sha256:...` digest via `nacfson_pipeline` (`clusters/<env>/projects/proj-blog.yaml`).
+  - **Track B — Blog Content Updates (`content/**` only)**: Reuses the cluster's **single existing `flux-system` (`source-controller`)** to watch `github.com/nacfson/nacfson_blog` with `spec.ignore: /* !/content/`. When a new `.md` post, `.svg` diagram, or `.html` demo is pushed to `content/**` without code changes, GitHub Actions skips the Docker image build (`paths:` filter), and `blog-web` pulls the updated `.tar.gz` artifact from `source-controller` over internal ClusterIP into a writable `emptyDir` volume (`/var/run/blog-content/`) in ~30 seconds with **zero Docker image rebuild and zero pod restart**.
 - **Light-Theme Kimi-Style Interactive Article Experience**: Support `scrollHero` (layered scroll/drag parallax header), `blogPicture` (responsive SVG/WebP figure with caption), `blogIframeTabs` (tabbed interactive HTML `<iframe sandbox="allow-scripts">` with `click-or-center` poster lazy-mounting and fullscreen modal), `benchmarkChart` (grouped SVG bar chart), `benchmarkTable` (metric comparison table with bold best-value highlighting), and `BlogV2MiniNav` (sticky scroll-spy section navigation).
 
 ### 2.2 Non-Goals
@@ -142,10 +144,10 @@ nacfson_blog/
 │   │   └── *.svg                   # Hero parallax layers & architecture diagrams
 │   └── demos/
 │       └── hubble-flow-sim.html    # Self-contained interactive HTML simulator
-├── Dockerfile                      # Multi-stage build (Node 20 builds web/out -> Go 1.22 builds binary -> minimal UID 10001 runtime)
+├── Dockerfile                      # Multi-stage build (Node 22 builds web/out -> Go 1.22 builds binary -> minimal UID 10001 runtime)
 └── .github/
     └── workflows/
-        └── build.yml               # Runs tests + builds GHCR image ONLY when web/**, cmd/**, internal/**, or Dockerfile change
+        └── publish-ghcr-image.yml  # Track A: Builds & publishes multi-arch GHCR image ONLY when web/**, cmd/**, internal/**, or Dockerfile change
 ```
 
 ### 5.2 Markdown Frontmatter & Custom Block Schema
@@ -219,8 +221,53 @@ type ContentStore interface {
 - `GET /content/demos/{filepath...}`: Serves standalone interactive HTML files from `/var/run/blog-content/demos/` with strict isolation headers (`Content-Security-Policy: default-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'none'; frame-ancestors 'self'`, `X-Content-Type-Options: nosniff`).
 - `GET /{path...}`: Serves the static Next.js frontend export from `/app/web/out`.
 
-### 5.4 Zero-Image-Rebuild Content Sync (`internal/syncer/flux_tarball.go`)
+### 5.4 Dual-Track Delivery Architecture: Feature Image Builds vs. Content-Only Live Sync
 
+To ensure new application features are built and rolled out as immutable container images while routine blog posts never waste CI image builds, `nacfson_blog` operates two explicitly separated delivery tracks based on the changed Git paths:
+
+| Scenario | Triggered Paths in `nacfson_blog` | Track A: Docker Image Build & GHCR Publish (`.github/workflows/publish-ghcr-image.yml`) | Track B: Flux `source-controller` Live Content Sync (`GitRepository/nacfson-blog-content`) | Cluster Effect in `proj-blog` |
+| :--- | :--- | :--- | :--- | :--- |
+| **1. Feature / UI / Server Code Update** | `web/**`, `cmd/**`, `internal/**`, `go.mod`, `go.sum`, `Dockerfile`, `.github/workflows/**` | **RUNS**: Runs Go unit tests + Next.js static export, builds multi-arch (`linux/amd64,linux/arm64`) OCI image, pushes `ghcr.io/nacfson/blog-web` to GHCR, and outputs new `sha256:...` digest. | **IGNORED**: Flux `GitRepository` has `ignore: /* !/content/`, so code-only commits do not repackage the content tarball. | `Kustomization/proj-blog` rolls out a new `blog-web` Pod with the updated `/app/blog-server` & `/app/web/out` image digest. |
+| **2. Blog Content Update Only** | `content/posts/*.md`, `content/assets/*`, `content/demos/*.html`, `content/competencies/*.json` | **SKIPPED (`0s`)**: Excluded from `on.push.paths` in `publish-ghcr-image.yml`. Zero Docker build and zero GHCR push. | **RUNS**: Flux `source-controller` pulls the commit, packs `content/**` into `latest.tar.gz`, and updates the HTTP `ETag`. | Running `blog-web` Pod detects the new `ETag` and extracts `content/**` into `/var/run/blog-content/` (`emptyDir`) in ~30s (**0 Pod restarts**). |
+| **3. Combined Commit (Both Code & Content)** | Both code paths (`web/**` or `cmd/**`) AND `content/**` | **RUNS**: Builds and publishes the new `ghcr.io/nacfson/blog-web@sha256:...` image. | **RUNS**: Updates `latest.tar.gz` in `source-controller` with the new `content/**` files. | New `blog-web` Pod rolls out with the new feature code and pulls the new `latest.tar.gz` into its `emptyDir` on startup. |
+
+#### Track A: Feature & Code Image Build System (`.github/workflows/publish-ghcr-image.yml` + `Dockerfile`)
+Following the exact convention of `Project_PN/.github/workflows/publish-ghcr-images.yml` and `nacfson_pipeline/.github/workflows/build-images.yaml`:
+
+1. **Path-Filtered Trigger**:
+   ```yaml
+   name: Build and Publish Blog Image
+   on:
+     push:
+       branches: [main]
+       paths:
+         - "web/**"
+         - "cmd/**"
+         - "internal/**"
+         - "go.mod"
+         - "go.sum"
+         - "Dockerfile"
+         - ".github/workflows/publish-ghcr-image.yml"
+     pull_request:
+       branches: [main]
+       paths:
+         - "web/**"
+         - "cmd/**"
+         - "internal/**"
+         - "go.mod"
+         - "go.sum"
+         - "Dockerfile"
+     workflow_dispatch:
+   ```
+2. **Preflight Quality Gates & Multi-Arch Buildx Publish**:
+   - **Job 1 (`quality-gates`)**: Runs `go test -race ./...` and `cd web && npm ci && npm run build` to verify the Next.js static export (`web/out`) compiles cleanly before any Docker build starts.
+   - **Job 2 (`build-and-push`, on `main` push / dispatch)**: Uses `docker/setup-qemu-action@v3`, `docker/setup-buildx-action@v3`, `docker/login-action@v3` (`ghcr.io`), and `docker/build-push-action@v6` with `platforms: linux/amd64,linux/arm64` to publish `ghcr.io/nacfson/blog-web:sha-<short>` and `ghcr.io/nacfson/blog-web:latest`, printing the immutable index digest (`sha256:...`) for promotion in `nacfson_pipeline/clusters/<env>/projects/proj-blog.yaml` (`spec.images`).
+3. **Multi-Stage `Dockerfile` (`UID 10001`, Restricted PSS Compliant)**:
+   - **Stage 1 (`web-builder`, `node:22-alpine`)**: Installs `web/` dependencies and runs `npm run build` to produce the static Next.js bundle at `/work/web/out`.
+   - **Stage 2 (`go-builder`, `golang:1.22-alpine`)**: Compiles `CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/blog-server ./cmd/blog-server`.
+   - **Stage 3 (`runtime`, `alpine:3.20` / distroless nonroot `10001:10001`)**: Copies `/app/blog-server`, `/app/web/out`, and `/app/seed-content` (`content/`), sets `USER 10001:10001`, exposes port `8080`, and runs `/app/blog-server`.
+
+#### Track B: Zero-Image-Rebuild Content Sync (`internal/syncer/flux_tarball.go`)
 1. **Bootstrap Seed on Startup**:
    - The container image includes a read-only seed copy of `content/` at `/app/seed-content/`.
    - On startup, before starting the HTTP listener, `blog-server` copies `/app/seed-content/` into `/var/run/blog-content/current` (`emptyDir`) if empty, then immediately attempts a one-shot sync from `FLUX_ARTIFACT_URL` (`http://source-controller.flux-system.svc.cluster.local:80/gitrepository/flux-system/nacfson-blog-content/latest.tar.gz`). Even if `source-controller` is momentarily unreachable during cold boot, the pod starts cleanly with the seed content and passes `/healthz`.
