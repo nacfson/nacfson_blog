@@ -1,0 +1,112 @@
+{
+  "domains": [
+    {
+      "id": "kubernetes-cncf",
+      "name": "CNCF & Kubernetes Platform Engineering",
+      "description": "Production Kubernetes operations, CNI/eBPF networking, GitOps controllers, and multi-tenant isolation.",
+      "level": "Senior / Staff",
+      "competencies": [
+        {
+          "name": "Cilium eBPF & L7 Network Policies",
+          "level": "Expert",
+          "status": "Verified in Production",
+          "skills": [
+            "eBPF Datapath",
+            "L7 FQDN Filtering",
+            "Hubble Relay Observability",
+            "K3s Replacement of Flannel"
+          ],
+          "linkedPosts": [
+            "cilium-zero-plaintext-k3s"
+          ]
+        },
+        {
+          "name": "GitOps Automation with FluxCD",
+          "level": "Expert",
+          "status": "Verified in Production",
+          "skills": [
+            "Multi-Tenant Kustomizations",
+            "OCI & Git Repositories",
+            "Helm Controller",
+            "Automated Reconciliation"
+          ],
+          "linkedPosts": [
+            "cilium-zero-plaintext-k3s"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zero-trust-security",
+      "name": "Zero-Trust Security & Secrets Management",
+      "description": "Eliminating plaintext secrets, strict Pod Security Standards, and cryptographic identity.",
+      "level": "Senior",
+      "competencies": [
+        {
+          "name": "OpenBao / HashiCorp Vault Wire Proxies",
+          "level": "Senior",
+          "status": "Verified in Production",
+          "skills": [
+            "Dynamic Database Credentials",
+            "Wire-Level Token Interception",
+            "Zero Pod Secret Mounts",
+            "Transit Secrets Engine"
+          ],
+          "linkedPosts": [
+            "cilium-zero-plaintext-k3s"
+          ]
+        },
+        {
+          "name": "Linux Container Isolation & PSS",
+          "level": "Senior",
+          "status": "Verified in Production",
+          "skills": [
+            "Restricted Pod Security Standard",
+            "readOnlyRootFilesystem",
+            "UID 10001 Non-Root",
+            "RuntimeDefault Seccomp"
+          ],
+          "linkedPosts": [
+            "cilium-zero-plaintext-k3s"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "systems-engineering",
+      "name": "Systems & Cloud-Native Backend Engineering",
+      "description": "High-performance low-dependency systems services in Go and Linux systems administration.",
+      "level": "Senior",
+      "competencies": [
+        {
+          "name": "Go Stdlib Systems Services",
+          "level": "Expert",
+          "status": "Verified in Production",
+          "skills": [
+            "Zero-Dependency HTTP Servers",
+            "Wire Protocol Parsers",
+            "Tarball / Stream Decoders",
+            "Concurrency & sync.RWMutex"
+          ],
+          "linkedPosts": [
+            "cilium-zero-plaintext-k3s"
+          ]
+        },
+        {
+          "name": "ARM64 Edge & Bare-Metal Infrastructure",
+          "level": "Senior",
+          "status": "Verified in Production",
+          "skills": [
+            "Oracle Cloud A1 Flex",
+            "Systemd Services",
+            "UFW & Iptables",
+            "ZFS / NVMe Storage"
+          ],
+          "linkedPosts": [
+            "cilium-zero-plaintext-k3s"
+          ]
+        }
+      ]
+    }
+  ]
+}
