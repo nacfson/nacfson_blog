@@ -95,6 +95,7 @@ jobs:
           images: ghcr.io/${{ github.repository_owner }}/blog-web
           tags: |
             type=sha,prefix=sha-,format=short
+            type=sha,prefix=sha-,format=long
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push multi-arch image
@@ -110,6 +111,37 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Print image digest
+      - name: Publish full image references
+        env:
+          DIGEST: ${{ steps.build-push.outputs.digest }}
+          TAGS: ${{ steps.meta.outputs.tags }}
+          OWNER: ${{ github.repository_owner }}
+          COMMIT_SHA: ${{ github.sha }}
         run: |
-          echo "Published image digest: ${{ steps.build-push.outputs.digest }}"
+          IMAGE="ghcr.io/${OWNER,,}/blog-web"
+          PINNED="${IMAGE}@${DIGEST}"
+          echo "Commit SHA:    ${COMMIT_SHA}"
+          echo "Image digest:  ${DIGEST}"
+          echo "Pinned image:  ${PINNED}"
+          echo "Tags:"
+          echo "${TAGS}" | sed 's/^/  /'
+          echo "::notice title=Pinned image::${PINNED}"
+          {
+            echo "## Published \`blog-web\` image"
+            echo
+            echo "| Field | Value |"
+            echo "| :--- | :--- |"
+            echo "| Commit SHA | \`${COMMIT_SHA}\` |"
+            echo "| Image digest | \`${DIGEST}\` |"
+            echo "| Pinned reference | \`${PINNED}\` |"
+            echo
+            echo "### Tags"
+            echo
+            echo "${TAGS}" | sed 's/^\(.*\)$/- `\1`/'
+            echo
+            echo "### Pin in nacfson_pipeline (update-project-images)"
+            echo
+            echo '```text'
+            echo "proj-blog web image: ${PINNED}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

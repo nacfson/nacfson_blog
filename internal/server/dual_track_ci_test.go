@@ -27,6 +27,23 @@ func TestDualTrackPipelineInvariants(t *testing.T) {
 		t.Errorf("workflow must NOT trigger Docker builds on content/** changes")
 	}
 
+	// Image traceability: every published image must be addressable by the
+	// full 40-char commit SHA (not only the short sha-xxxxxxx tag) and by its
+	// immutable sha256 digest, and the run summary must expose a ready-to-paste
+	// pin line for the nacfson_pipeline update-project-images skill.
+	for _, required := range []string{
+		`type=sha,prefix=sha-,format=short`,
+		`type=sha,prefix=sha-,format=long`,
+		`GITHUB_STEP_SUMMARY`,
+		`steps.build-push.outputs.digest`,
+		`@${DIGEST}`,
+		`proj-blog web image:`,
+	} {
+		if !strings.Contains(wf, required) {
+			t.Errorf("workflow missing image traceability token %s", required)
+		}
+	}
+
 	dfBytes, err := os.ReadFile(filepath.Join(root, "Dockerfile"))
 	if err != nil {
 		t.Fatalf("missing Dockerfile: %v", err)
