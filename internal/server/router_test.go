@@ -15,7 +15,7 @@ import (
 
 func setupTestServer(t *testing.T) http.Handler {
 	t.Helper()
-	contentRoot, err := filepath.Abs("../../content")
+	contentRoot, err := filepath.Abs("../../tests/fixtures/content")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -46,7 +46,7 @@ func TestRouter_HealthAndAPIEndpoints(t *testing.T) {
 	}
 
 	rec = httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/posts?pillar=project-updates", nil))
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/posts?topic=cloud-native", nil))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("/api/posts: expected 200, got %d", rec.Code)
 	}
@@ -93,19 +93,33 @@ func TestRouter_RejectsPathTraversal(t *testing.T) {
 	}
 }
 
-func TestRouter_CompetenciesEndpoint(t *testing.T) {
+func TestRouter_CompetenciesEndpointRemoved(t *testing.T) {
 	h := setupTestServer(t)
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/competencies", nil))
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 for removed /api/competencies, got %d", rec.Code)
+	}
+}
+
+func TestRouter_EmptyContentServesEmptyPostList(t *testing.T) {
+	contentRoot := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(contentRoot, "posts"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	store, err := content.NewFolderStore(func() string { return contentRoot })
+	if err != nil {
+		t.Fatalf("NewFolderStore on empty content: %v", err)
+	}
+	h := server.NewHandler(store, func() string { return contentRoot }, t.TempDir())
+
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/posts", nil))
 	if rec.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d", rec.Code)
+		t.Fatalf("expected 200 for /api/posts on empty content, got %d", rec.Code)
 	}
-	if ct := rec.Header().Get("Content-Type"); !strings.Contains(ct, "application/json") {
-		t.Errorf("expected application/json, got %q", ct)
-	}
-	var data map[string]interface{}
-	if err := json.Unmarshal(rec.Body.Bytes(), &data); err != nil {
-		t.Fatalf("failed to parse competencies json: %v", err)
+	if body := strings.TrimSpace(rec.Body.String()); body != "[]" {
+		t.Fatalf("expected empty JSON array, got %q", body)
 	}
 }
 

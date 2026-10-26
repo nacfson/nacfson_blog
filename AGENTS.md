@@ -5,9 +5,9 @@
 `nacfson_blog` is the cloud-native engineering blog and interactive CNCF portfolio hosted at `https://blog.nacfson.cloud` (`proj-blog`) on the `nacfson_pipeline` K3s platform.
 
 Core architectural pillars:
-- **Zero-Dependency Go 1.22 Stdlib Server (`cmd/blog-server/`, `internal/`)**: Serves the REST API (`/api/posts`, `/api/posts/{slug}`, `/api/competencies`), static assets (`/content/assets/*`), strictly sandboxed interactive HTML demos (`/content/demos/*` with `default-src 'none'` CSP and `X-Content-Type-Options: nosniff`), and the Next.js static export (`web/out`).
+- **Zero-Dependency Go 1.22 Stdlib Server (`cmd/blog-server/`, `internal/`)**: Serves the REST API (`/api/posts`, `/api/posts/{slug}`), static assets (`/content/assets/*`), strictly sandboxed interactive HTML demos (`/content/demos/*` with `default-src 'none'` CSP and `X-Content-Type-Options: nosniff`), and the Next.js static export (`web/out`).
 - **Dual-Track GitOps Content Hot-Reload (`internal/syncer/flux_tarball.go`)**: Polls the in-cluster FluxCD `source-controller` `GitRepository/nacfson-blog-content` tarball via `ETag`/`If-None-Match` (`304 Not Modified`), enforcing zip-slip/symlink rejection and atomic `a`/`b` workspace swaps without restarting pods or rebuilding container images on `content/**` updates.
-- **Light-Theme Technical Reader & Custom Block Dispatcher (`web/`)**: Next.js `14.2.15` (`output: 'export'`) UI (`#f8fafc` canvas, `#ffffff` cards, `#2563eb` accent) with Kimi-style fenced Markdown blocks (`scrollHero`, `blogPicture`, `blogIframeTabs` with click-or-center poster guard and `<iframe sandbox="allow-scripts">`, `benchmarkChart`, `benchmarkTable`, `BlogV2MiniNav`, and isolated error-boundary fallback).
+- **Monochrome Editorial Reader & Custom Block Dispatcher (`web/`)**: Next.js `14.2.15` (`output: 'export'`) UI (Tailwind `stone` palette: `#fafaf9` canvas, `#ffffff` cards, `#0c0a09` ink, serif headlines, no accent hue; posts carry a `topic` of `cloud-native` | `zero-trust` | `ai-agents` | `open-source`) with Kimi-style fenced Markdown blocks (`scrollHero`, `blogPicture`, `blogIframeTabs` with click-or-center poster guard and `<iframe sandbox="allow-scripts">`, `benchmarkChart`, `benchmarkTable`, `BlogV2MiniNav`, and isolated error-boundary fallback).
 
 ---
 

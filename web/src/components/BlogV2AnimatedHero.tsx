@@ -89,7 +89,7 @@ export const BlogV2AnimatedHero: React.FC<BlogV2AnimatedHeroProps> = ({ data }) 
       ref={containerRef}
       role="region"
       aria-label={data.ariaLabel || 'Article hero'}
-      className="relative w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-100 shadow-sm transition-all mb-8"
+      className="relative w-full overflow-hidden rounded-md border border-stone-200 bg-stone-100 transition-all mb-8"
       style={{
         aspectRatio: data.aspectRatio ? data.aspectRatio.replace('/', ' / ') : '16 / 9',
         maxHeight: data.heightVh ? `${data.heightVh}vh` : '560px',
@@ -129,7 +129,7 @@ export const BlogV2AnimatedHero: React.FC<BlogV2AnimatedHeroProps> = ({ data }) 
 
       {/* Scroll Hint */}
       {data.scrollHint && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/70 backdrop-blur-sm border border-slate-200/60 text-xs font-medium text-slate-600 pointer-events-none shadow-sm">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 backdrop-blur-sm border border-stone-200 text-xs font-medium text-stone-700 pointer-events-none">
           <span>{data.scrollHint}</span>
           <svg className="w-3.5 h-3.5 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
@@ -142,23 +142,23 @@ export const BlogV2AnimatedHero: React.FC<BlogV2AnimatedHeroProps> = ({ data }) 
         <button
           type="button"
           onClick={() => setShowControls((prev) => !prev)}
-          className="px-2.5 py-1 text-xs font-medium text-slate-700 bg-white/80 hover:bg-white backdrop-blur-md border border-slate-200 rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
+          className="px-2.5 py-1 text-xs font-medium text-stone-800 bg-white/90 hover:bg-white backdrop-blur-md border border-stone-300 rounded-md transition-colors flex items-center gap-1.5"
           aria-expanded={showControls}
         >
-          <svg className="w-3.5 h-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-3.5 h-3.5 text-stone-950" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
           </svg>
           Interactive Layers
         </button>
 
         {showControls && (
-          <div className="mt-2 w-64 p-3 bg-white/95 backdrop-blur-md rounded-xl border border-slate-200 shadow-lg text-xs space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <span className="font-semibold text-slate-800">Layer Controls</span>
+          <div className="mt-2 w-64 p-3 bg-white/95 backdrop-blur-md rounded-md border border-stone-300 shadow-sm text-xs space-y-3">
+            <div className="flex items-center justify-between border-b border-stone-200 pb-2">
+              <span className="font-semibold text-stone-900">Layer Controls</span>
               <button
                 type="button"
                 onClick={handleReset}
-                className="text-blue-600 hover:text-blue-700 font-medium hover:underline text-[11px]"
+                className="text-stone-950 font-medium underline-offset-4 hover:underline text-[11px]"
               >
                 Reset Layers
               </button>
@@ -167,9 +167,9 @@ export const BlogV2AnimatedHero: React.FC<BlogV2AnimatedHeroProps> = ({ data }) 
             {data.controls && data.controls.length > 0 ? (
               data.controls.map((ctrl) => (
                 <div key={ctrl.id} className="space-y-1">
-                  <div className="flex justify-between text-slate-600 font-medium">
+                  <div className="flex justify-between text-stone-600 font-medium">
                     <label htmlFor={`ctrl-${ctrl.id}`}>{ctrl.label}</label>
-                    <span className="font-mono text-slate-500">
+                    <span className="font-mono text-stone-500">
                       {controlValues[ctrl.id] ?? ctrl.default}
                     </span>
                   </div>
@@ -181,12 +181,12 @@ export const BlogV2AnimatedHero: React.FC<BlogV2AnimatedHeroProps> = ({ data }) 
                     step={ctrl.step}
                     value={controlValues[ctrl.id] ?? ctrl.default}
                     onChange={(e) => handleControlChange(ctrl.id, parseFloat(e.target.value))}
-                    className="w-full accent-blue-600 h-1.5 bg-slate-200 rounded-lg cursor-pointer"
+                    className="w-full accent-stone-950 h-1.5 bg-stone-200 rounded cursor-pointer"
                   />
                 </div>
               ))
             ) : (
-              <div className="text-slate-500 italic">No custom sliders configured.</div>
+              <div className="text-stone-500 italic">No custom sliders configured.</div>
             )}
           </div>
         )}

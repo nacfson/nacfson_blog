@@ -83,10 +83,10 @@ export const BlogV2MiniNav: React.FC<BlogV2MiniNavProps> = ({ headings: initialH
       aria-label="Table of contents"
       className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pr-4 text-sm hidden lg:block"
     >
-      <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 px-3">
+      <div className="text-xs font-semibold uppercase tracking-wider text-stone-500 mb-3 px-3">
         On this page
       </div>
-      <ul className="space-y-1 border-l border-slate-200">
+      <ul className="space-y-1 border-l border-stone-200">
         {headings.map((heading) => {
           const isActive = activeId === heading.id;
           return (
@@ -96,8 +96,8 @@ export const BlogV2MiniNav: React.FC<BlogV2MiniNavProps> = ({ headings: initialH
                 onClick={(e) => handleClick(e, heading.id)}
                 className={`group flex items-center -ml-px pl-3 py-1.5 border-l-2 transition-colors text-xs ${
                   isActive
-                    ? 'border-blue-600 font-medium text-blue-600 bg-blue-50/50 rounded-r'
-                    : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300'
+                    ? 'border-stone-950 font-semibold text-stone-950 bg-stone-100 rounded-r'
+                    : 'border-transparent text-stone-600 hover:text-stone-950 hover:border-stone-300'
                 }`}
               >
                 <span className="line-clamp-2">{heading.text}</span>

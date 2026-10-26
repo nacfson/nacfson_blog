@@ -24,9 +24,9 @@ func NewHandler(store content.ContentStore, activeContentDir func() string, webO
 
 	// GET /api/posts -> JSON list from store.ListPosts
 	mux.HandleFunc("GET /api/posts", func(w http.ResponseWriter, r *http.Request) {
-		pillar := r.URL.Query().Get("pillar")
+		topic := r.URL.Query().Get("topic")
 		tag := r.URL.Query().Get("tag")
-		posts, err := store.ListPosts(r.Context(), pillar, tag)
+		posts, err := store.ListPosts(r.Context(), topic, tag)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -56,17 +56,6 @@ func NewHandler(store content.ContentStore, activeContentDir func() string, webO
 		}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(post)
-	})
-
-	// GET /api/competencies -> raw JSON from store.GetCompetencyMatrix
-	mux.HandleFunc("GET /api/competencies", func(w http.ResponseWriter, r *http.Request) {
-		data, err := store.GetCompetencyMatrix(r.Context())
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write(data)
 	})
 
 	// GET /content/assets/{filepath...} -> validates clean relative path inside assets dir

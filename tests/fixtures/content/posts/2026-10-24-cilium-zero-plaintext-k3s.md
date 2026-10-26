@@ -2,10 +2,11 @@
 title: "Zero-Plaintext K3s: Cilium eBPF, OpenBao & Go Wire Proxies"
 slug: "cilium-zero-plaintext-k3s"
 date: "2026-10-24"
-category: "project_update"
+topic: "cloud-native"
 project: "nacfson-pipeline"
 tags: ["kubernetes", "cilium", "openbao", "fluxcd", "golang"]
 summary: "How we replaced Flannel and plaintext Kubernetes Secrets with Git-vendored Cilium v1.20.3, Hubble Relay observability, and a zero-dependency Go PostgreSQL wire proxy on a single ARM64 K3s cluster."
+readTimeMinutes: 8
 ---
 
 ```scrollHero
@@ -13,11 +14,11 @@ summary: "How we replaced Flannel and plaintext Kubernetes Secrets with Git-vend
   "ariaLabel": "Interactive sea of clouds and Cilium eBPF cluster topology",
   "scrollHint": "Scroll to explore",
   "aspectRatio": "1600/760",
-  "baseImage": "./assets/hero-bg-sky.svg",
+  "baseImage": "/content/assets/hero-bg-sky.svg",
   "layers": [
-    { "src": "./assets/hero-layer-1-back-clouds.svg", "depth": 0.25, "role": "background-clouds" },
-    { "src": "./assets/hero-layer-2-title.svg", "depth": 0.55, "role": "title-mark", "fadeOnScroll": true },
-    { "src": "./assets/hero-layer-3-front-clouds.svg", "depth": 0.90, "role": "foreground-mist" }
+    { "src": "/content/assets/hero-layer-1-back-clouds.svg", "depth": 0.25, "role": "background-clouds" },
+    { "src": "/content/assets/hero-layer-2-title.svg", "depth": 0.55, "role": "title-mark", "fadeOnScroll": true },
+    { "src": "/content/assets/hero-layer-3-front-clouds.svg", "depth": 0.90, "role": "foreground-mist" }
   ],
   "controls": [
     { "id": "flowSpeed", "label": "eBPF Packet Flow", "min": 0.2, "max": 3.0, "step": 0.1, "default": 1.4 },
@@ -32,17 +33,17 @@ In **`nacfson_pipeline`**, every hosted tenant project (`proj-pn`, `proj-blog`) 
 
 ```blogPicture
 {
-  "lightSrc": "./assets/cilium-vault-architecture.svg",
-  "darkSrc": "./assets/cilium-vault-architecture.svg",
+  "lightSrc": "/content/assets/cilium-vault-architecture.svg",
+  "darkSrc": "/content/assets/cilium-vault-architecture.svg",
   "alt": "End-to-end packet path from Traefik Ingress through Cilium eBPF policies to vault-db-proxy and PostgreSQL 16",
-  "caption": "Figure 1: Real SVG diagram (./assets/cilium-vault-architecture.svg) rendered via ```blogPicture with locked 1200/520 aspect ratio.",
+  "caption": "Figure 1: Real SVG diagram (/content/assets/cilium-vault-architecture.svg) rendered via ```blogPicture with locked 1200/520 aspect ratio.",
   "aspectRatio": "1200/520"
 }
 ```
 
 ## 2. Interactive HTML + Poster Image Sandbox
 
-Below, `blogIframeTabs` displays a lightweight static image (`./assets/wire-proxy-poster.svg`) first and mounts the real standalone interactive HTML file (`./demos/hubble-flow-sim.html`) inside an `<iframe>` when clicked (`"interaction": "click-or-center"`):
+Below, `blogIframeTabs` displays a lightweight static image (`/content/assets/wire-proxy-poster.svg`) first and mounts the real standalone interactive HTML file (`/content/demos/hubble-flow-sim.html`) inside an `<iframe>` when clicked (`"interaction": "click-or-center"`):
 
 ```blogIframeTabs
 {
@@ -56,15 +57,15 @@ Below, `blogIframeTabs` displays a lightweight static image (`./assets/wire-prox
       "panels": [
         {
           "type": "iframe",
-          "src": "./demos/hubble-flow-sim.html",
-          "poster": "./assets/wire-proxy-poster.svg",
+          "src": "/content/demos/hubble-flow-sim.html",
+          "poster": "/content/assets/wire-proxy-poster.svg",
           "interaction": "click-or-center",
           "title": "Interactive Vault DB Proxy Handshake"
         }
       ],
       "cta": {
         "label": "Open standalone HTML demo",
-        "url": "./demos/hubble-flow-sim.html"
+        "url": "/content/demos/hubble-flow-sim.html"
       }
     }
   ]

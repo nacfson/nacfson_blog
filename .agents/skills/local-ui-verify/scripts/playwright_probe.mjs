@@ -116,17 +116,26 @@ async function run() {
 
       const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
       recordAssertion(
-        "home_light_theme_background",
-        bg === "rgb(248, 250, 252)",
+        "home_monochrome_background",
+        bg === "rgb(250, 250, 249)",
         `body background-color=${bg}`
       );
 
       const bodyText = await page.locator("body").innerText();
+      const heroText = await page.locator("h1").first().innerText();
       recordAssertion(
-        "home_competency_matrix_rendered",
-        bodyText.includes("Technical Competency Matrix") &&
-          bodyText.includes("CNCF & Kubernetes Platform Engineering"),
-        "Competency matrix & domain cards visible"
+        "home_make_better_world_hero_rendered",
+        heroText.trim() === "Make Better World" &&
+          bodyText.includes("Cloud-Native & Kubernetes") &&
+          bodyText.includes("AI & LLM Agents") &&
+          (await page.getByRole("navigation", { name: "Topics" }).count()) === 1 &&
+          (await page.getByRole("region", { name: "Featured articles" }).count()) === 1,
+        `h1=${heroText.trim()}`
+      );
+      recordAssertion(
+        "home_competency_matrix_and_k3s_badge_removed",
+        !bodyText.includes("Competency Matrix") && !bodyText.includes("K3s Single-Pod"),
+        "No Competency Matrix section/nav link and no K3s Single-Pod badge"
       );
       recordAssertion(
         "home_seed_post_card_rendered",

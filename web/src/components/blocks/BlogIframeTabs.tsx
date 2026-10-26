@@ -57,12 +57,12 @@ export const BlogIframeTabs: React.FC<BlogIframeTabsProps> = ({ data }) => {
   return (
     <div
       ref={containerRef}
-      className={`my-8 overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm transition-all ${
-        isFullscreen ? 'fixed inset-0 z-50 m-0 rounded-none border-none p-4 bg-slate-900/90 backdrop-blur-md flex flex-col' : ''
+      className={`my-8 overflow-hidden rounded-md border border-stone-200 bg-white transition-all ${
+        isFullscreen ? 'fixed inset-0 z-50 m-0 rounded-none border-none p-4 bg-stone-950/90 backdrop-blur-md flex flex-col' : ''
       }`}
     >
       {/* Top Header: Tabs & Actions */}
-      <div className="flex flex-wrap items-center justify-between border-b border-slate-200 bg-slate-50/80 px-4 py-2.5 gap-2">
+      <div className="flex flex-wrap items-center justify-between border-b border-stone-200 bg-stone-50 px-4 py-2.5 gap-2">
         {/* Tabs */}
         <div className="flex items-center space-x-1 overflow-x-auto">
           {tabs.map((tab, idx) => {
@@ -72,10 +72,10 @@ export const BlogIframeTabs: React.FC<BlogIframeTabsProps> = ({ data }) => {
                 key={tab.id || idx}
                 type="button"
                 onClick={() => setActiveTabIdx(idx)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                   isActive
-                    ? 'bg-white text-blue-600 shadow-sm border border-slate-200/80 font-semibold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+                    ? 'bg-white text-stone-950 border border-stone-300 font-semibold'
+                    : 'text-stone-600 hover:text-stone-950 hover:bg-stone-200/60'
                 }`}
               >
                 {tab.label}
@@ -91,7 +91,7 @@ export const BlogIframeTabs: React.FC<BlogIframeTabsProps> = ({ data }) => {
               href={activeTab.cta.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 px-2 py-1 hover:bg-blue-50 rounded"
+              className="text-xs text-stone-700 hover:text-stone-950 hover:underline underline-offset-4 font-medium flex items-center gap-1 px-2 py-1 hover:bg-stone-100 rounded"
             >
               <span>{activeTab.cta.label}</span>
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -103,7 +103,7 @@ export const BlogIframeTabs: React.FC<BlogIframeTabsProps> = ({ data }) => {
           <button
             type="button"
             onClick={() => setIsFullscreen((prev) => !prev)}
-            className="p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-200/60 rounded-md transition-colors"
+            className="p-1.5 text-stone-500 hover:text-stone-950 hover:bg-stone-200/60 rounded-md transition-colors"
             title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
             aria-label={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
           >
@@ -122,7 +122,7 @@ export const BlogIframeTabs: React.FC<BlogIframeTabsProps> = ({ data }) => {
 
       {/* Main Body */}
       <div
-        className={`relative w-full bg-slate-900 ${
+        className={`relative w-full bg-stone-900 ${
           isFullscreen ? 'flex-1' : ''
         }`}
         style={{ height: isFullscreen ? '100%' : containerHeight }}
@@ -136,7 +136,7 @@ export const BlogIframeTabs: React.FC<BlogIframeTabsProps> = ({ data }) => {
             title={activeTab?.label || 'Interactive Demo'}
           />
         ) : (
-          <div className="relative h-full w-full overflow-hidden bg-slate-950 flex items-center justify-center">
+          <div className="relative h-full w-full overflow-hidden bg-stone-950 flex items-center justify-center">
             {activePoster ? (
               <img
                 src={activePoster}
@@ -144,7 +144,7 @@ export const BlogIframeTabs: React.FC<BlogIframeTabsProps> = ({ data }) => {
                 className="absolute inset-0 h-full w-full object-contain opacity-80"
               />
             ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-slate-950" />
+              <div className="absolute inset-0 bg-stone-900" />
             )}
 
             {/* Launch Overlay Button */}
@@ -152,14 +152,14 @@ export const BlogIframeTabs: React.FC<BlogIframeTabsProps> = ({ data }) => {
               <button
                 type="button"
                 onClick={handleLaunch}
-                className="group flex items-center gap-2.5 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/30 transition-all hover:bg-blue-500 hover:scale-105 active:scale-95"
+                className="group flex items-center gap-2.5 rounded-md border border-white bg-white px-5 py-3 text-sm font-semibold text-stone-950 shadow-none transition-all hover:bg-stone-200 hover:scale-105 active:scale-95"
               >
                 <svg className="w-5 h-5 fill-current transition-transform group-hover:scale-110" viewBox="0 0 24 24">
                   <path d="M8 5v14l11-7z" />
                 </svg>
                 Launch Interactive Demo
               </button>
-              <span className="text-xs text-slate-300 backdrop-blur-sm px-2.5 py-1 rounded-md bg-black/40">
+              <span className="text-xs text-stone-300 backdrop-blur-sm px-2.5 py-1 rounded-md bg-black/40">
                 Click to load live sandboxed HTML simulator
               </span>
             </div>
@@ -169,9 +169,9 @@ export const BlogIframeTabs: React.FC<BlogIframeTabsProps> = ({ data }) => {
 
       {/* Caption description footer if present */}
       {(activeTab?.captionTitle || activeTab?.captionDescription || activeTab?.caption) && (
-        <div className="border-t border-slate-100 bg-white px-4 py-3 text-xs text-slate-600">
+        <div className="border-t border-stone-200 bg-white px-4 py-3 text-xs text-stone-600">
           {activeTab.captionTitle && (
-            <div className="font-semibold text-slate-800 mb-0.5">{activeTab.captionTitle}</div>
+            <div className="font-semibold text-stone-900 mb-0.5">{activeTab.captionTitle}</div>
           )}
           <div>{activeTab.captionDescription || activeTab.caption}</div>
         </div>

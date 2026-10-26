@@ -12,7 +12,7 @@ import (
 )
 
 func TestFolderStore_LoadsAndFiltersPosts(t *testing.T) {
-	root, err := filepath.Abs("../../content")
+	root, err := filepath.Abs("../../tests/fixtures/content")
 	if err != nil {
 		t.Fatalf("abs path: %v", err)
 	}
@@ -29,9 +29,9 @@ func TestFolderStore_LoadsAndFiltersPosts(t *testing.T) {
 		t.Errorf("expected slug cilium-zero-plaintext-k3s, got %q", posts[0].Slug)
 	}
 
-	filtered, err := store.ListPosts(context.Background(), "project-updates", "Cilium")
+	filtered, err := store.ListPosts(context.Background(), "cloud-native", "Cilium")
 	if err != nil || len(filtered) != 1 {
-		t.Fatalf("expected 1 post matching pillar+tag, got %d (err=%v)", len(filtered), err)
+		t.Fatalf("expected 1 post matching topic+tag, got %d (err=%v)", len(filtered), err)
 	}
 
 	post, err := store.GetPost(context.Background(), "cilium-zero-plaintext-k3s")
@@ -41,15 +41,10 @@ func TestFolderStore_LoadsAndFiltersPosts(t *testing.T) {
 	if post.MarkdownBody == "" {
 		t.Errorf("expected non-empty MarkdownBody")
 	}
-
-	matrix, err := store.GetCompetencyMatrix(context.Background())
-	if err != nil || len(matrix) == 0 {
-		t.Fatalf("expected non-empty competency matrix, err=%v", err)
-	}
 }
 
 func TestFolderStore_RejectsInvalidSlugsAndMissingPosts(t *testing.T) {
-	root, _ := filepath.Abs("../../content")
+	root, _ := filepath.Abs("../../tests/fixtures/content")
 	store, err := content.NewFolderStore(func() string { return root })
 	if err != nil {
 		t.Fatalf("NewFolderStore: %v", err)
@@ -69,7 +64,7 @@ func TestFolderStore_RejectsInvalidFrontmatter(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(tmp, "posts"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	badMD := "---\ntitle: \"Missing Slug and Bad Pillar\"\ndate: \"2026-10-24\"\npillar: \"invalid-pillar\"\n---\nBody\n"
+	badMD := "---\ntitle: \"Missing Slug and Bad Topic\"\ndate: \"2026-10-24\"\ntopic: \"invalid-topic\"\n---\nBody\n"
 	if err := os.WriteFile(filepath.Join(tmp, "posts", "bad.md"), []byte(badMD), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -83,7 +78,7 @@ func TestFolderStore_RejectsInvalidFrontmatter(t *testing.T) {
 }
 
 func TestFolderStore_GetPost_TagsSliceIsolation(t *testing.T) {
-	root, err := filepath.Abs("../../content")
+	root, err := filepath.Abs("../../tests/fixtures/content")
 	if err != nil {
 		t.Fatalf("abs path: %v", err)
 	}
@@ -115,9 +110,9 @@ func TestFolderStore_Sorting(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	post1 := "---\ntitle: \"Older Post\"\nslug: \"older-post\"\ndate: \"2026-01-01\"\npillar: \"tech-opinions\"\n---\nBody 1\n"
-	post2 := "---\ntitle: \"Newer Post\"\nslug: \"newer-post\"\ndate: \"2026-10-20\"\npillar: \"tech-opinions\"\n---\nBody 2\n"
-	post3 := "---\ntitle: \"Middle Post\"\nslug: \"middle-post\"\ndate: \"2026-05-15\"\npillar: \"tech-opinions\"\n---\nBody 3\n"
+	post1 := "---\ntitle: \"Older Post\"\nslug: \"older-post\"\ndate: \"2026-01-01\"\ntopic: \"ai-agents\"\n---\nBody 1\n"
+	post2 := "---\ntitle: \"Newer Post\"\nslug: \"newer-post\"\ndate: \"2026-10-20\"\ntopic: \"ai-agents\"\n---\nBody 2\n"
+	post3 := "---\ntitle: \"Middle Post\"\nslug: \"middle-post\"\ndate: \"2026-05-15\"\ntopic: \"ai-agents\"\n---\nBody 3\n"
 
 	if err := os.WriteFile(filepath.Join(postsDir, "p1.md"), []byte(post1), 0o644); err != nil {
 		t.Fatal(err)
@@ -151,7 +146,7 @@ func TestFolderStore_Sorting(t *testing.T) {
 }
 
 func TestFolderStore_ConcurrentAccessAndReload(t *testing.T) {
-	root, err := filepath.Abs("../../content")
+	root, err := filepath.Abs("../../tests/fixtures/content")
 	if err != nil {
 		t.Fatalf("abs path: %v", err)
 	}
@@ -166,7 +161,6 @@ func TestFolderStore_ConcurrentAccessAndReload(t *testing.T) {
 			for j := 0; j < 50; j++ {
 				_, _ = store.ListPosts(context.Background(), "", "")
 				_, _ = store.GetPost(context.Background(), "cilium-zero-plaintext-k3s")
-				_, _ = store.GetCompetencyMatrix(context.Background())
 			}
 			done <- true
 		}()
@@ -186,62 +180,66 @@ func TestFolderStore_ConcurrentAccessAndReload(t *testing.T) {
 	}
 }
 
-func TestFolderStore_CompetencyMatrixCachingAndValidation(t *testing.T) {
+func TestFolderStore_EmptyPostsDirectory(t *testing.T) {
+	tmp := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(tmp, "posts"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	store, err := content.NewFolderStore(func() string { return tmp })
+	if err != nil {
+		t.Fatalf("NewFolderStore on empty posts dir: %v", err)
+	}
+	posts, err := store.ListPosts(context.Background(), "", "")
+	if err != nil {
+		t.Fatalf("ListPosts: %v", err)
+	}
+	if len(posts) != 0 {
+		t.Fatalf("expected 0 posts, got %d", len(posts))
+	}
+}
+
+func TestFolderStore_TopicValidationAndFiltering(t *testing.T) {
+	mk := func(t *testing.T, topicLine string) error {
+		t.Helper()
+		tmp := t.TempDir()
+		if err := os.MkdirAll(filepath.Join(tmp, "posts"), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		md := "---\ntitle: \"T\"\nslug: \"t\"\ndate: \"2026-10-25\"\n" + topicLine + "---\nBody\n"
+		if err := os.WriteFile(filepath.Join(tmp, "posts", "t.md"), []byte(md), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		_, err := content.NewFolderStore(func() string { return tmp })
+		return err
+	}
+
+	for _, topic := range []string{"cloud-native", "zero-trust", "ai-agents", "open-source"} {
+		if err := mk(t, "topic: \""+topic+"\"\n"); err != nil {
+			t.Errorf("topic %q should be valid, got %v", topic, err)
+		}
+	}
+	if err := mk(t, ""); err == nil || !strings.Contains(err.Error(), "topic") {
+		t.Errorf("expected missing topic to fail with a topic error, got %v", err)
+	}
+	if err := mk(t, "pillar: \"project-updates\"\n"); err == nil {
+		t.Errorf("expected legacy pillar-only frontmatter to fail validation")
+	}
+
 	tmp := t.TempDir()
 	postsDir := filepath.Join(tmp, "posts")
-	compDir := filepath.Join(tmp, "competencies")
 	if err := os.MkdirAll(postsDir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.MkdirAll(compDir, 0o755); err != nil {
-		t.Fatal(err)
-	}
-
-	postMD := "---\ntitle: \"Sample\"\nslug: \"sample\"\ndate: \"2026-10-24\"\npillar: \"tech-opinions\"\n---\nBody\n"
-	if err := os.WriteFile(filepath.Join(postsDir, "sample.md"), []byte(postMD), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	matrixPath := filepath.Join(compDir, "matrix.json")
-	if err := os.WriteFile(matrixPath, []byte(`{"domains":[]}`), 0o644); err != nil {
-		t.Fatal(err)
-	}
-
+	a := "---\ntitle: \"A\"\nslug: \"a\"\ndate: \"2026-10-25\"\ntopic: \"zero-trust\"\n---\nA\n"
+	b := "---\ntitle: \"B\"\nslug: \"b\"\ndate: \"2026-10-24\"\ntopic: \"open-source\"\n---\nB\n"
+	_ = os.WriteFile(filepath.Join(postsDir, "a.md"), []byte(a), 0o644)
+	_ = os.WriteFile(filepath.Join(postsDir, "b.md"), []byte(b), 0o644)
 	store, err := content.NewFolderStore(func() string { return tmp })
 	if err != nil {
 		t.Fatalf("NewFolderStore: %v", err)
 	}
-
-	// 1. Initial read succeeds
-	data, err := store.GetCompetencyMatrix(context.Background())
-	if err != nil || string(data) != `{"domains":[]}` {
-		t.Fatalf("expected matrix data, got err=%v data=%s", err, string(data))
-	}
-
-	// 2. Remove file from disk; GetCompetencyMatrix should still serve from in-memory cache
-	if err := os.Remove(matrixPath); err != nil {
-		t.Fatal(err)
-	}
-	cachedData, err := store.GetCompetencyMatrix(context.Background())
-	if err != nil || string(cachedData) != `{"domains":[]}` {
-		t.Fatalf("expected cached matrix data after file deletion, got err=%v", err)
-	}
-
-	// 3. Reload after deletion records error on GetCompetencyMatrix without failing Reload
-	if err := store.Reload(); err != nil {
-		t.Fatalf("Reload should not fail when matrix.json is missing: %v", err)
-	}
-	if _, err := store.GetCompetencyMatrix(context.Background()); err == nil {
-		t.Fatalf("expected error from GetCompetencyMatrix when matrix.json is missing")
-	}
-
-	// 4. Reload with invalid JSON fails
-	if err := os.WriteFile(matrixPath, []byte(`{ not valid json `), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	if err := store.Reload(); err == nil {
-		t.Fatalf("expected Reload to fail on invalid matrix JSON")
+	got, err := store.ListPosts(context.Background(), "zero-trust", "")
+	if err != nil || len(got) != 1 || got[0].Slug != "a" || got[0].Topic != content.TopicZeroTrust {
+		t.Fatalf("expected only post a with topic zero-trust, got %+v (err=%v)", got, err)
 	}
 }
-
-

@@ -9,15 +9,9 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        canvas: "#f8fafc",
+        canvas: "#fafaf9",
         card: "#ffffff",
-        primary: {
-          50: "#eff6ff",
-          100: "#dbeafe",
-          500: "#3b82f6",
-          600: "#2563eb",
-          700: "#1d4ed8",
-        },
+        ink: "#0c0a09",
       },
     },
   },

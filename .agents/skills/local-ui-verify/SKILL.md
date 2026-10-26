@@ -25,15 +25,16 @@ python3 .agents/skills/local-ui-verify/scripts/local_ui_verify.py \
 *(If running from a repository where the skill is only installed globally, invoke `~/.agents/skills/local-ui-verify/scripts/local_ui_verify.py`.)*
 
 What `--mode verify` checks automatically:
-- Builds `web/out` (if missing or `--rebuild` is passed) and `cmd/blog-server` into an isolated temporary runtime on a free local port (or probes `--base-url <url>` for non-blog web apps).
+- Builds `web/out` (if missing or `--rebuild` is passed) and `cmd/blog-server` into an isolated temporary runtime on a free local port (or probes `--base-url <url>` for non-blog web apps). The isolated server is seeded from the test fixture `tests/fixtures/content/` (not the published `content/`), so custom-block contracts stay verifiable even when the blog has no posts.
 - **HTTP & Security Header Contract**:
   - `GET /healthz` returns `200 OK` (`{"status":"ok"}`).
-  - `GET /api/posts`, `GET /api/posts/{slug}`, and `GET /api/competencies` return `200 OK` with valid JSON payloads.
+  - `GET /api/posts` and `GET /api/posts/{slug}` return `200 OK` with valid JSON payloads.
+  - `GET /api/competencies` (removed) returns `404 Not Found`.
   - `GET /content/demos/*` returns `Content-Security-Policy: default-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'none'; frame-ancestors 'self'` and `X-Content-Type-Options: nosniff`.
   - Unmatched `/api/*` routes return `404 Not Found` (never SPA `index.html`).
 - **Headless Browser (Playwright Chromium) Contract**:
-  - Renders `/` on desktop (`1440x900`) and mobile (`390x844`), verifying the Light-Theme canvas (`rgb(248, 250, 252)`), Competency Matrix, Pillar filters, and post cards.
-  - Renders `/post/?slug=cilium-zero-plaintext-k3s`, verifying custom blocks (`scrollHero`, `blogPicture`, `benchmarkChart`, `benchmarkTable`, `BlogV2MiniNav`, and `blogIframeTabs` poster guard).
+  - Renders `/` on desktop (`1440x900`) and mobile (`390x844`), verifying the monochrome stone canvas (`rgb(250, 250, 249)`), the `Make Better World` hero, the Topics rail and Featured shelf, the absence of the Competency Matrix and `K3s Single-Pod` badge, and post cards.
+  - Renders the fixture article `/post/?slug=cilium-zero-plaintext-k3s`, verifying custom blocks (`scrollHero`, `blogPicture`, `benchmarkChart`, `benchmarkTable`, `BlogV2MiniNav`, and `blogIframeTabs` poster guard).
   - Clicks `"Launch Interactive Demo"` and verifies that `<iframe sandbox="allow-scripts">` mounts cleanly.
   - Fails if any `console.error`, uncaught `pageerror`, or HTTP `>= 400` response occurs.
   - Saves full-page screenshots (`home-desktop.png`, `home-mobile.png`, `article-desktop.png`, `article-interactive-demo.png`) to `--artifact-dir`.
@@ -50,10 +51,9 @@ python3 .agents/skills/local-ui-verify/scripts/local_ui_verify.py \
   --port 8080
 ```
 
-Then share the live URLs with the user:
-- **Home & Competency Matrix**: `http://localhost:8080/`
-- **Article Reader & Interactive Sandbox**: `http://localhost:8080/post/?slug=cilium-zero-plaintext-k3s`
-- **Standalone eBPF Packet Flow Demo**: `http://localhost:8080/content/demos/hubble-flow-sim.html`
+Then share the live URLs with the user (manual mode serves the real published `content/`):
+- **Home**: `http://localhost:8080/`
+- **Article Reader**: `http://localhost:8080/post/?slug=<post-slug>` (for any post in `content/posts/`)
 
 Check status or stop the manual server when finished:
 

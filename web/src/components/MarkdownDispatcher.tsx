@@ -29,7 +29,7 @@ function renderInline(text: string): React.ReactNode[] {
       return (
         <code
           key={i}
-          className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-800 border border-slate-200/80"
+          className="rounded bg-stone-100 px-1.5 py-0.5 font-mono text-xs text-stone-800 border border-stone-200/80"
         >
           {part.slice(1, -1)}
         </code>
@@ -37,7 +37,7 @@ function renderInline(text: string): React.ReactNode[] {
     }
     if (part.startsWith('**') && part.endsWith('**')) {
       return (
-        <strong key={i} className="font-semibold text-slate-900">
+        <strong key={i} className="font-semibold text-stone-950">
           {part.slice(2, -2)}
         </strong>
       );
@@ -48,7 +48,7 @@ function renderInline(text: string): React.ReactNode[] {
         <a
           key={i}
           href={linkMatch[2]}
-          className="font-medium text-blue-600 underline hover:text-blue-700 transition-colors"
+          className="font-medium text-stone-950 underline underline-offset-4 decoration-stone-400 hover:decoration-stone-950 transition-colors"
           target={linkMatch[2].startsWith('http') ? '_blank' : undefined}
           rel={linkMatch[2].startsWith('http') ? 'noopener noreferrer' : undefined}
         >
@@ -67,7 +67,7 @@ function renderProseBlock(block: string, key: number | string): React.ReactNode 
   // Heading 1
   if (trimmed.startsWith('# ')) {
     return (
-      <h1 key={key} className="mt-10 mb-4 text-3xl font-extrabold tracking-tight text-slate-900">
+      <h1 key={key} className="mt-10 mb-4 font-serif text-3xl font-bold tracking-tight text-stone-950">
         {renderInline(trimmed.replace(/^#\s+/, ''))}
       </h1>
     );
@@ -81,7 +81,7 @@ function renderProseBlock(block: string, key: number | string): React.ReactNode 
       <h2
         key={key}
         id={id}
-        className="mt-10 mb-4 text-xl font-bold tracking-tight text-slate-900 scroll-mt-24 border-b border-slate-100 pb-2"
+        className="mt-10 mb-4 font-serif text-xl font-bold tracking-tight text-stone-950 scroll-mt-24 border-b border-stone-200 pb-2"
       >
         {renderInline(raw)}
       </h2>
@@ -91,7 +91,7 @@ function renderProseBlock(block: string, key: number | string): React.ReactNode 
   // Heading 3
   if (trimmed.startsWith('### ')) {
     return (
-      <h3 key={key} className="mt-8 mb-3 text-lg font-semibold text-slate-800">
+      <h3 key={key} className="mt-8 mb-3 text-lg font-semibold text-stone-900">
         {renderInline(trimmed.replace(/^###\s+/, ''))}
       </h3>
     );
@@ -106,7 +106,7 @@ function renderProseBlock(block: string, key: number | string): React.ReactNode 
     return (
       <blockquote
         key={key}
-        className="my-6 border-l-4 border-blue-500 bg-slate-50/80 px-4 py-3 italic text-slate-700 rounded-r-xl"
+        className="my-6 border-l-4 border-stone-950 bg-stone-100/70 px-4 py-3 italic text-stone-700 rounded-r-md"
       >
         {renderInline(quoteText)}
       </blockquote>
@@ -117,7 +117,7 @@ function renderProseBlock(block: string, key: number | string): React.ReactNode 
   if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
     const items = trimmed.split('\n').filter((l) => l.startsWith('- ') || l.startsWith('* '));
     return (
-      <ul key={key} className="my-4 list-disc pl-6 space-y-1.5 text-sm text-slate-700">
+      <ul key={key} className="my-4 list-disc pl-6 space-y-1.5 text-sm text-stone-700">
         {items.map((item, itemIdx) => (
           <li key={itemIdx}>{renderInline(item.replace(/^[-*]\s+/, ''))}</li>
         ))}
@@ -127,7 +127,7 @@ function renderProseBlock(block: string, key: number | string): React.ReactNode 
 
   // Standard paragraph
   return (
-    <p key={key} className="my-4 text-sm leading-relaxed text-slate-700 font-normal">
+    <p key={key} className="my-4 text-sm leading-relaxed text-stone-700 font-normal">
       {renderInline(trimmed)}
     </p>
   );
@@ -169,7 +169,7 @@ export const MarkdownDispatcher: React.FC<MarkdownDispatcherProps> = ({ markdown
           <div
             key={`err-${blockKey++}`}
             role="alert"
-            className="my-4 rounded-xl border border-red-200 bg-red-50 p-4 text-xs font-mono text-red-700"
+            className="my-4 rounded-md border border-stone-300 bg-stone-100 p-4 text-xs font-mono text-stone-800"
           >
             Invalid scrollHero JSON block
           </div>
@@ -184,7 +184,7 @@ export const MarkdownDispatcher: React.FC<MarkdownDispatcherProps> = ({ markdown
           <div
             key={`err-${blockKey++}`}
             role="alert"
-            className="my-4 rounded-xl border border-red-200 bg-red-50 p-4 text-xs font-mono text-red-700"
+            className="my-4 rounded-md border border-stone-300 bg-stone-100 p-4 text-xs font-mono text-stone-800"
           >
             Invalid blogPicture JSON block
           </div>
@@ -199,7 +199,7 @@ export const MarkdownDispatcher: React.FC<MarkdownDispatcherProps> = ({ markdown
           <div
             key={`err-${blockKey++}`}
             role="alert"
-            className="my-4 rounded-xl border border-red-200 bg-red-50 p-4 text-xs font-mono text-red-700"
+            className="my-4 rounded-md border border-stone-300 bg-stone-100 p-4 text-xs font-mono text-stone-800"
           >
             Invalid blogIframeTabs JSON block
           </div>
@@ -214,7 +214,7 @@ export const MarkdownDispatcher: React.FC<MarkdownDispatcherProps> = ({ markdown
           <div
             key={`err-${blockKey++}`}
             role="alert"
-            className="my-4 rounded-xl border border-red-200 bg-red-50 p-4 text-xs font-mono text-red-700"
+            className="my-4 rounded-md border border-stone-300 bg-stone-100 p-4 text-xs font-mono text-stone-800"
           >
             Invalid benchmarkChart JSON block
           </div>
@@ -229,7 +229,7 @@ export const MarkdownDispatcher: React.FC<MarkdownDispatcherProps> = ({ markdown
           <div
             key={`err-${blockKey++}`}
             role="alert"
-            className="my-4 rounded-xl border border-red-200 bg-red-50 p-4 text-xs font-mono text-red-700"
+            className="my-4 rounded-md border border-stone-300 bg-stone-100 p-4 text-xs font-mono text-stone-800"
           >
             Invalid benchmarkTable JSON block
           </div>
@@ -240,7 +240,7 @@ export const MarkdownDispatcher: React.FC<MarkdownDispatcherProps> = ({ markdown
       elements.push(
         <pre
           key={`code-${blockKey++}`}
-          className="my-6 overflow-x-auto rounded-xl border border-slate-800 bg-slate-900 p-4 font-mono text-xs text-slate-100"
+          className="my-6 overflow-x-auto rounded-md border border-stone-800 bg-stone-950 p-4 font-mono text-xs text-stone-100"
         >
           <code>{rawContent}</code>
         </pre>

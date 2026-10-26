@@ -1,10 +1,10 @@
-export type Pillar = 'project-updates' | 'competency-growth' | 'tech-opinions';
+export type Topic = 'cloud-native' | 'zero-trust' | 'ai-agents' | 'open-source';
 
 export interface PostSummary {
   slug: string;
   title: string;
   date: string;
-  pillar: Pillar;
+  topic: Topic;
   project?: string;
   summary: string;
   tags: string[];
@@ -13,26 +13,6 @@ export interface PostSummary {
 
 export interface Post extends PostSummary {
   markdownBody: string;
-}
-
-export interface CompetencyItem {
-  name: string;
-  level: string;
-  status: string;
-  skills: string[];
-  linkedPosts?: string[];
-}
-
-export interface CompetencyDomain {
-  id: string;
-  name: string;
-  description: string;
-  level: string;
-  competencies: CompetencyItem[];
-}
-
-export interface CompetencyMatrix {
-  domains: CompetencyDomain[];
 }
 
 // Custom Markdown Blocks

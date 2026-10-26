@@ -2,7 +2,6 @@ package content
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -19,8 +18,6 @@ type FolderStore struct {
 	mu         sync.RWMutex
 	posts      map[string]Post
 	summaries  []PostSummary
-	matrixData []byte
-	matrixErr  error
 }
 
 // Compile-time check that FolderStore implements ContentStore.
@@ -89,38 +86,22 @@ func (s *FolderStore) Reload() error {
 		return newSummaries[i].Slug < newSummaries[j].Slug
 	})
 
-	// Load and cache competency matrix in memory if present.
-	// If missing, do not fail Reload(), but record matrixErr so GetCompetencyMatrix returns it.
-	var newMatrixData []byte
-	var newMatrixErr error
-	matrixPath := filepath.Join(root, "competencies", "matrix.json")
-	data, err := os.ReadFile(matrixPath)
-	if err != nil {
-		newMatrixErr = fmt.Errorf("read competency matrix %s: %w", matrixPath, err)
-	} else if !json.Valid(data) {
-		return fmt.Errorf("invalid competency matrix JSON in %s", matrixPath)
-	} else {
-		newMatrixData = data
-	}
-
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.posts = newPosts
 	s.summaries = newSummaries
-	s.matrixData = newMatrixData
-	s.matrixErr = newMatrixErr
 
 	return nil
 }
 
-// ListPosts returns posts optionally filtered by pillar and tag, sorted newest first.
-func (s *FolderStore) ListPosts(ctx context.Context, pillar, tag string) ([]PostSummary, error) {
+// ListPosts returns posts optionally filtered by topic and tag, sorted newest first.
+func (s *FolderStore) ListPosts(ctx context.Context, topic, tag string) ([]PostSummary, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	result := make([]PostSummary, 0, len(s.summaries))
 	for _, summary := range s.summaries {
-		if pillar != "" && !strings.EqualFold(string(summary.Pillar), pillar) {
+		if topic != "" && !strings.EqualFold(string(summary.Topic), topic) {
 			continue
 		}
 		if tag != "" && !hasTag(summary.Tags, tag) {
@@ -151,20 +132,6 @@ func (s *FolderStore) GetPost(ctx context.Context, slug string) (*Post, error) {
 		postCopy.Tags = append([]string(nil), post.Tags...)
 	}
 	return &postCopy, nil
-}
-
-// GetCompetencyMatrix returns the raw JSON content of matrix.json served from in-memory cache.
-func (s *FolderStore) GetCompetencyMatrix(ctx context.Context) ([]byte, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	if s.matrixErr != nil {
-		return nil, s.matrixErr
-	}
-
-	cp := make([]byte, len(s.matrixData))
-	copy(cp, s.matrixData)
-	return cp, nil
 }
 
 // hasTag checks whether any tag matches target case-insensitively.
@@ -274,8 +241,8 @@ func parseFrontmatter(fm, filename string) (*PostSummary, error) {
 			summary.Slug = unquote(val)
 		case "date":
 			summary.Date = unquote(val)
-		case "pillar":
-			summary.Pillar = Pillar(unquote(val))
+		case "topic":
+			summary.Topic = Topic(unquote(val))
 		case "project":
 			summary.Project = unquote(val)
 		case "summary":
@@ -312,12 +279,12 @@ func parseFrontmatter(fm, filename string) (*PostSummary, error) {
 	if summary.Date == "" {
 		return nil, fmt.Errorf("%s: date is required in post frontmatter", filename)
 	}
-	switch summary.Pillar {
-	case PillarProjectUpdates, PillarCompetencyGrowth, PillarTechOpinions:
+	switch summary.Topic {
+	case TopicCloudNative, TopicZeroTrust, TopicAIAgents, TopicOpenSource:
 		// valid
 	default:
-		return nil, fmt.Errorf("%s: invalid pillar %q: must be one of %s, %s, %s",
-			filename, summary.Pillar, PillarProjectUpdates, PillarCompetencyGrowth, PillarTechOpinions)
+		return nil, fmt.Errorf("%s: invalid topic %q: must be one of %s, %s, %s, %s",
+			filename, summary.Topic, TopicCloudNative, TopicZeroTrust, TopicAIAgents, TopicOpenSource)
 	}
 
 	return summary, nil

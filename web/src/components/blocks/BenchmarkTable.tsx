@@ -22,24 +22,24 @@ export const BenchmarkTable: React.FC<BenchmarkTableProps> = ({ data }) => {
     const boldMatch = rawVal.match(/^\*\*(.*?)\*\*$/);
     if (boldMatch) {
       return (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-stone-950 text-stone-50 border border-stone-950">
           {boldMatch[1]}
         </span>
       );
     }
 
     return (
-      <span className={isHighlightedCol ? 'font-semibold text-blue-950' : 'text-slate-700'}>
+      <span className={isHighlightedCol ? 'font-semibold text-stone-950' : 'text-stone-700'}>
         {rawVal}
       </span>
     );
   };
 
   return (
-    <div className="my-8 overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-sm">
+    <div className="my-8 overflow-hidden rounded-md border border-stone-200 bg-white">
       {tableTitle && (
-        <div className="border-b border-slate-200 bg-slate-50/75 px-5 py-3">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-700">
+        <div className="border-b border-stone-200 bg-stone-50 px-5 py-3">
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-700">
             {tableTitle}
           </h4>
         </div>
@@ -47,7 +47,7 @@ export const BenchmarkTable: React.FC<BenchmarkTableProps> = ({ data }) => {
 
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
-          <thead className="bg-slate-50/50 text-slate-600 font-semibold border-b border-slate-100">
+          <thead className="bg-stone-50/50 text-stone-600 font-semibold border-b border-stone-200">
             <tr>
               {data.columns.map((col, idx) => {
                 const isHighlight = data.highlightColumn === idx;
@@ -56,7 +56,7 @@ export const BenchmarkTable: React.FC<BenchmarkTableProps> = ({ data }) => {
                     key={col}
                     scope="col"
                     className={`px-5 py-3 ${
-                      isHighlight ? 'bg-blue-50/60 text-blue-900 font-bold border-x border-blue-100' : ''
+                      isHighlight ? 'bg-stone-100 text-stone-950 font-bold border-x border-stone-200' : ''
                     }`}
                   >
                     {col}
@@ -65,13 +65,13 @@ export const BenchmarkTable: React.FC<BenchmarkTableProps> = ({ data }) => {
               })}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-stone-100">
             {data.rows.map((rowItem, rowIdx) => {
               const cells = normalizeRow(rowItem);
               return (
                 <tr
                   key={rowIdx}
-                  className="hover:bg-slate-50/60 transition-colors"
+                  className="hover:bg-stone-50 transition-colors"
                 >
                   {cells.map((cell, cellIdx) => {
                     const isHighlight = data.highlightColumn === cellIdx;
@@ -79,8 +79,8 @@ export const BenchmarkTable: React.FC<BenchmarkTableProps> = ({ data }) => {
                       <td
                         key={cellIdx}
                         className={`px-5 py-3.5 ${
-                          cellIdx === 0 ? 'font-medium text-slate-900' : ''
-                        } ${isHighlight ? 'bg-blue-50/30 border-x border-blue-100/50' : ''}`}
+                          cellIdx === 0 ? 'font-medium text-stone-950' : ''
+                        } ${isHighlight ? 'bg-stone-50 border-x border-stone-200/70' : ''}`}
                       >
                         {renderCellContent(cell, isHighlight)}
                       </td>

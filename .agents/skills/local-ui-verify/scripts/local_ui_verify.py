@@ -140,8 +140,8 @@ def run_blog_http_checks(base_url: str) -> dict[str, Any]:
     status, _, body = http_get(f"{base_url}/api/posts/{first_slug}")
     add_check("api_post_detail", status == 200 and first_slug in body, f"HTTP {status} for /api/posts/{first_slug}")
 
-    status, _, body = http_get(f"{base_url}/api/competencies")
-    add_check("api_competencies", status == 200 and "domains" in body, f"HTTP {status}")
+    status, _, _ = http_get(f"{base_url}/api/competencies")
+    add_check("api_competencies_removed_404", status == 404, f"HTTP {status}")
 
     status, headers, _ = http_get(f"{base_url}/content/demos/hubble-flow-sim.html")
     csp = headers.get("content-security-policy", "")
@@ -204,7 +204,7 @@ def run_verify_mode(
                     "PORT": str(port),
                     "STORAGE_MODE": "folder",
                     "CONTENT_WORKSPACE_DIR": str(workspace_dir),
-                    "SEED_CONTENT_DIR": str(root / "content"),
+                    "SEED_CONTENT_DIR": str(root / "tests" / "fixtures" / "content"),
                     "WEB_OUT_DIR": str(root / "web" / "out"),
                 }
             )
@@ -291,8 +291,6 @@ def run_manual_mode(root: Path, port: int, rebuild: bool) -> dict[str, Any]:
             "port": port,
             "urls": {
                 "home": f"{base_url}/",
-                "article_reader": f"{base_url}/post/?slug=cilium-zero-plaintext-k3s",
-                "interactive_demo": f"{base_url}/content/demos/hubble-flow-sim.html",
                 "healthz": f"{base_url}/healthz",
                 "api_posts": f"{base_url}/api/posts",
             },
@@ -346,8 +344,6 @@ def run_manual_mode(root: Path, port: int, rebuild: bool) -> dict[str, Any]:
         "runtime_dir": str(runtime_dir),
         "urls": {
             "home": f"{base_url}/",
-            "article_reader": f"{base_url}/post/?slug=cilium-zero-plaintext-k3s",
-            "interactive_demo": f"{base_url}/content/demos/cilium-packet-flow.html",
             "healthz": f"{base_url}/healthz",
             "api_posts": f"{base_url}/api/posts",
         },
@@ -369,7 +365,6 @@ def run_status_mode(port: int) -> dict[str, Any]:
             "urls",
             {
                 "home": f"http://localhost:{port}/",
-                "article_reader": f"http://localhost:{port}/post/?slug=cilium-zero-plaintext-k3s",
             },
         ),
     }

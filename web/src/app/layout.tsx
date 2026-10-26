@@ -3,8 +3,8 @@ import './globals.css';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'nacfson // Cloud Native & Systems Engineering',
-  description: 'Interactive frontier-research engineering blog and technical competency matrix.',
+  title: 'Make Better World | nacfson',
+  description: 'nacfson\'s engineering blog on cloud-native platforms, zero-trust security, AI agents, and open source.',
 };
 
 export default function RootLayout({
@@ -13,66 +13,89 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="bg-[#f8fafc] text-slate-900">
-      <body className="min-h-screen flex flex-col bg-[#f8fafc]">
+    <html lang="en" className="bg-stone-50 text-stone-950">
+      <body className="min-h-screen flex flex-col bg-stone-50">
         {/* Top Navigation */}
-        <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
+        <header className="sticky top-0 z-40 border-b border-stone-200 bg-white/90 backdrop-blur-md">
           <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center space-x-4">
-              <Link
-                href="/"
-                className="flex items-center space-x-2.5 text-slate-900 hover:text-blue-600 transition-colors"
-              >
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-sm shadow-sm">
-                  N
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-bold tracking-tight text-sm">nacfson</span>
-                  <span className="text-[10px] text-slate-500 font-mono -mt-0.5">engineering blog</span>
-                </div>
-              </Link>
-              <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <span className="w-1.5 h-1.5 mr-1 rounded-full bg-emerald-500 animate-pulse" />
-                K3s Single-Pod
-              </span>
-            </div>
+            <Link href="/" className="flex items-center space-x-2.5 text-stone-950">
+              <div className="flex h-8 w-8 items-center justify-center rounded bg-stone-950 text-stone-50 font-serif font-bold text-sm">
+                N
+              </div>
+              <div className="flex flex-col">
+                <span className="font-bold tracking-tight text-sm">nacfson</span>
+                <span className="text-[10px] text-stone-500 font-mono -mt-0.5">engineering blog</span>
+              </div>
+            </Link>
 
-            <nav className="flex items-center space-x-6 text-xs font-medium text-slate-600">
-              <Link href="/" className="hover:text-blue-600 transition-colors">
+            <nav className="flex items-center space-x-6 text-xs font-medium text-stone-600">
+              <Link href="/" className="hover:text-stone-950 hover:underline underline-offset-4">
                 Articles
               </Link>
-              <a href="/#competencies" className="hover:text-blue-600 transition-colors">
-                Competency Matrix
-              </a>
               <a
                 href="https://github.com/nacfson"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 hover:text-slate-900 transition-colors"
+                className="inline-flex items-center gap-1 hover:text-stone-950 hover:underline underline-offset-4"
               >
                 <span>GitHub</span>
-                <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
+                <span aria-hidden="true">↗</span>
               </a>
             </nav>
           </div>
         </header>
 
+        {/* Sub-navigation */}
+        <div className="border-b border-stone-200 bg-white">
+          <div className="mx-auto flex h-11 max-w-7xl items-center gap-7 px-4 sm:px-6 lg:px-8 text-xs">
+            <span className="border-r border-stone-200 pr-5 font-serif text-[13px] font-bold text-stone-950">Make Better World</span>
+            <Link href="/" className="flex h-11 items-center border-b-2 border-stone-950 font-semibold text-stone-950">
+              Articles
+            </Link>
+          </div>
+        </div>
+
         {/* Main Content Area */}
         <main className="flex-1">{children}</main>
 
         {/* Footer */}
-        <footer className="border-t border-slate-200 bg-white py-8 text-xs text-slate-500">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div>
-              <p className="font-medium text-slate-700">nacfson_blog &middot; proj-blog</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                Go 1.22 stdlib &middot; Next.js 14 static export &middot; FluxCD live tarball sync &middot; Cilium eBPF
-              </p>
+        <footer className="border-t border-stone-200 bg-white pt-12 pb-7 text-xs">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-2 gap-8 md:grid-cols-[2fr_1fr_1fr]">
+              <div className="col-span-2 md:col-span-1">
+                <p className="font-serif text-sm font-bold text-stone-950">Make Better World</p>
+                <p className="mt-2 max-w-sm leading-relaxed text-stone-500">
+                  nacfson&apos;s engineering log on cloud-native platforms, zero-trust security, AI agents, and open source.
+                </p>
+              </div>
+              <div>
+                <p className="mb-3 font-semibold text-stone-950">Topics</p>
+                <ul className="space-y-2 text-stone-500">
+                  <li><a href="/?topic=cloud-native" className="hover:text-stone-950 hover:underline underline-offset-4">Cloud-Native</a></li>
+                  <li><a href="/?topic=zero-trust" className="hover:text-stone-950 hover:underline underline-offset-4">Zero-Trust</a></li>
+                  <li><a href="/?topic=ai-agents" className="hover:text-stone-950 hover:underline underline-offset-4">AI Agents</a></li>
+                  <li><a href="/?topic=open-source" className="hover:text-stone-950 hover:underline underline-offset-4">Open Source</a></li>
+                </ul>
+              </div>
+              <div>
+                <p className="mb-3 font-semibold text-stone-950">Elsewhere</p>
+                <ul className="space-y-2 text-stone-500">
+                  <li>
+                    <a
+                      href="https://github.com/nacfson"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-stone-950 hover:underline underline-offset-4"
+                    >
+                      GitHub
+                    </a>
+                  </li>
+                </ul>
+              </div>
             </div>
-            <div className="text-right text-[11px] text-slate-400">
-              <span>Zero plaintext credentials &middot; Restricted PSS</span>
+            <div className="mt-10 flex flex-col gap-2 border-t border-stone-100 pt-4 text-[11px] text-stone-400 sm:flex-row sm:justify-between">
+              <span>&copy; 2026 nacfson</span>
+              <span>Built with Go + Next.js</span>
             </div>
           </div>
         </footer>

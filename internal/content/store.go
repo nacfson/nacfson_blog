@@ -5,13 +5,14 @@ import (
 	"errors"
 )
 
-// Pillar represents one of the three core blog content pillars.
-type Pillar string
+// Topic represents one of the four interest topics a post belongs to.
+type Topic string
 
 const (
-	PillarProjectUpdates   Pillar = "project-updates"
-	PillarCompetencyGrowth Pillar = "competency-growth"
-	PillarTechOpinions     Pillar = "tech-opinions"
+	TopicCloudNative Topic = "cloud-native"
+	TopicZeroTrust   Topic = "zero-trust"
+	TopicAIAgents    Topic = "ai-agents"
+	TopicOpenSource  Topic = "open-source"
 )
 
 // PostSummary contains metadata for post listings and navigation.
@@ -19,7 +20,7 @@ type PostSummary struct {
 	Slug            string   `json:"slug"`
 	Title           string   `json:"title"`
 	Date            string   `json:"date"`
-	Pillar          Pillar   `json:"pillar"`
+	Topic           Topic    `json:"topic"`
 	Project         string   `json:"project,omitempty"`
 	Summary         string   `json:"summary"`
 	Tags            []string `json:"tags"`
@@ -32,11 +33,10 @@ type Post struct {
 	MarkdownBody string `json:"markdownBody"`
 }
 
-// ContentStore provides access to posts and competency metadata.
+// ContentStore provides access to blog posts.
 type ContentStore interface {
-	ListPosts(ctx context.Context, pillar, tag string) ([]PostSummary, error)
+	ListPosts(ctx context.Context, topic, tag string) ([]PostSummary, error)
 	GetPost(ctx context.Context, slug string) (*Post, error)
-	GetCompetencyMatrix(ctx context.Context) ([]byte, error)
 }
 
 var (
