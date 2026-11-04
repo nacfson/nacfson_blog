@@ -42,16 +42,33 @@ func NewFolderStore(activeRoot func() string) (*FolderStore, error) {
 
 // Reload rescans the active content directory and re-indexes all markdown posts.
 func (s *FolderStore) Reload() error {
-	root := s.activeRoot()
+	newPosts, newSummaries, err := loadPosts(s.activeRoot())
+	if err != nil {
+		return err
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.posts = newPosts
+	s.summaries = newSummaries
+
+	return nil
+}
+
+// loadPosts reads and validates every markdown post under <root>/posts.
+// It is the single indexing path shared by FolderStore.Reload and ValidateDir,
+// so offline validation always matches what the running server accepts.
+// Summaries are returned sorted newest first (ties broken by slug).
+func loadPosts(root string) (map[string]Post, []PostSummary, error) {
 	postsDir := filepath.Join(root, "posts")
 
 	entries, err := os.ReadDir(postsDir)
 	if err != nil {
-		return fmt.Errorf("read posts directory %s: %w", postsDir, err)
+		return nil, nil, fmt.Errorf("read posts directory %s: %w", postsDir, err)
 	}
 
-	newPosts := make(map[string]Post)
-	newSummaries := make([]PostSummary, 0, len(entries))
+	posts := make(map[string]Post)
+	summaries := make([]PostSummary, 0, len(entries))
 
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".md") {
@@ -61,37 +78,30 @@ func (s *FolderStore) Reload() error {
 		filePath := filepath.Join(postsDir, entry.Name())
 		data, err := os.ReadFile(filePath)
 		if err != nil {
-			return fmt.Errorf("read post file %s: %w", filePath, err)
+			return nil, nil, fmt.Errorf("read post file %s: %w", filePath, err)
 		}
 
 		post, err := parsePost(string(data), entry.Name())
 		if err != nil {
-			return fmt.Errorf("parse post %s: %w", filePath, err)
+			return nil, nil, fmt.Errorf("parse post %s: %w", filePath, err)
 		}
 
-		if _, exists := newPosts[post.Slug]; exists {
-			return fmt.Errorf("duplicate post slug %q found in %s", post.Slug, filePath)
+		if _, exists := posts[post.Slug]; exists {
+			return nil, nil, fmt.Errorf("duplicate post slug %q found in %s", post.Slug, filePath)
 		}
 
-		newPosts[post.Slug] = *post
-		newSummaries = append(newSummaries, post.PostSummary)
+		posts[post.Slug] = *post
+		summaries = append(summaries, post.PostSummary)
 	}
 
-	// Sort summaries descending by Date (newest first).
-	// If dates are identical, sort alphabetically by Slug.
-	sort.Slice(newSummaries, func(i, j int) bool {
-		if newSummaries[i].Date != newSummaries[j].Date {
-			return newSummaries[i].Date > newSummaries[j].Date
+	sort.Slice(summaries, func(i, j int) bool {
+		if summaries[i].Date != summaries[j].Date {
+			return summaries[i].Date > summaries[j].Date
 		}
-		return newSummaries[i].Slug < newSummaries[j].Slug
+		return summaries[i].Slug < summaries[j].Slug
 	})
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.posts = newPosts
-	s.summaries = newSummaries
-
-	return nil
+	return posts, summaries, nil
 }
 
 // ListPosts returns posts optionally filtered by topic and tag, sorted newest first.

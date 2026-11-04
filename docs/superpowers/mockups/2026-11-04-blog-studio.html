@@ -1,0 +1,911 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blog Studio · mockup</title>
+<!--
+  Blog Studio interactive mockup (docs/superpowers/specs/2026-11-04-blog-studio-design.md).
+  Self-contained: no network access. Git commands are SIMULATED and only printed to the log.
+-->
+<style>
+  :root{
+    --s50:#fafaf9;--s100:#f5f5f4;--s200:#e7e5e4;--s300:#d6d3d1;--s400:#a8a29e;--s500:#78716c;
+    --s600:#57534e;--s700:#44403c;--s800:#292524;--s900:#1c1917;--s950:#0c0a09;
+    --serif:Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:var(--sans);background:var(--s50);color:var(--s950);font-size:13px;
+       display:grid;grid-template-rows:52px 1fr;overflow:hidden}
+  button{font:inherit;cursor:pointer}
+  input,select,textarea{font:inherit;color:inherit}
+  .hatch{background-color:var(--s100);
+         background-image:repeating-linear-gradient(45deg,var(--s400) 0 1px,transparent 1px 9px)}
+
+  /* Top bar */
+  .top{display:flex;align-items:center;gap:14px;padding:0 16px;background:#fff;border-bottom:1px solid var(--s200)}
+  .brand{font-family:var(--serif);font-weight:700;font-size:16px;white-space:nowrap}
+  .brand .sep{color:var(--s400);margin:0 6px;font-family:var(--sans);font-weight:400}
+  .local{font-family:var(--mono);font-size:11px;color:var(--s500);border:1px solid var(--s200);
+         border-radius:4px;padding:2px 6px;margin-left:8px;font-weight:400}
+  .branch{font-family:var(--mono);font-size:11.5px;color:var(--s700);display:flex;align-items:center;gap:6px}
+  .branch svg{width:14px;height:14px}
+  .status{font-size:11.5px;color:var(--s600);display:flex;align-items:center;gap:6px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--s400);display:inline-block}
+  .dot.dirty{background:transparent;border:1.5px solid var(--s700)}
+  .dot.saved{background:var(--s500)}
+  .dot.pub{background:var(--s950)}
+  .spacer{flex:1}
+  .btn{border:1px solid var(--s300);background:#fff;color:var(--s900);border-radius:4px;padding:6px 12px;
+       font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:8px}
+  .btn:hover{border-color:var(--s950)}
+  .btn.primary{background:var(--s950);color:var(--s50);border-color:var(--s950)}
+  .btn.primary:hover{background:var(--s800)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn.block{width:100%;justify-content:center}
+  kbd{font-family:var(--mono);font-size:10px;color:var(--s500);border:1px solid var(--s200);border-radius:3px;padding:0 4px}
+  .btn.primary kbd{color:var(--s300);border-color:var(--s700)}
+
+  /* Layout */
+  .app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:0}
+  .side{border-right:1px solid var(--s200);background:var(--s50);padding:14px 12px;overflow:auto}
+  .side h3{font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--s400);margin:20px 4px 6px}
+  .side ul{list-style:none;margin:0;padding:0}
+  .side li button{width:100%;text-align:left;background:none;border:0;border-radius:4px;padding:7px 8px;
+                  display:grid;gap:2px;color:var(--s700)}
+  .side li button:hover{background:var(--s100);color:var(--s950)}
+  .side li button.active{background:var(--s950);color:var(--s50)}
+  .side li .t{font-size:12.5px;font-weight:600;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .side li .m{font-size:10.5px;color:var(--s500);display:flex;gap:6px;align-items:center}
+  .side li button.active .m{color:var(--s400)}
+  .side .empty{font-size:11.5px;color:var(--s400);padding:4px 8px}
+
+  .main{display:grid;grid-template-rows:auto minmax(0,1fr) 190px;min-height:0;min-width:0}
+
+  /* Frontmatter */
+  .fm{display:grid;grid-template-columns:2fr 1.2fr .8fr 1fr 1fr;gap:10px 12px;padding:12px 16px;
+      background:#fff;border-bottom:1px solid var(--s200)}
+  .fm label{display:grid;gap:4px;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--s500)}
+  .fm label.wide{grid-column:span 3}
+  .fm label.wide2{grid-column:span 2}
+  .fm input,.fm select{border:1px solid var(--s200);border-radius:4px;padding:6px 8px;background:var(--s50);
+      font-size:12.5px;text-transform:none;letter-spacing:0;font-weight:400;color:var(--s950);width:100%}
+  .fm input:focus,.fm select:focus,textarea:focus{outline:2px solid var(--s950);outline-offset:-1px}
+  .fm input.bad,.fm select.bad{border-color:var(--s950);background:#fff;box-shadow:inset 3px 0 0 var(--s950)}
+  .fm .hint{font-weight:400;text-transform:none;letter-spacing:0;color:var(--s400);font-size:10.5px}
+  .fm .title-in{font-family:var(--serif);font-size:15px;font-weight:700}
+
+  /* Split */
+  .split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:0}
+  .pane{display:grid;grid-template-rows:34px minmax(0,1fr);min-height:0;min-width:0}
+  .pane+.pane{border-left:1px solid var(--s200)}
+  .pane-head{display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--s200);
+             font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--s500);
+             background:var(--s50);white-space:nowrap;overflow:hidden}
+  .pane-head .muted{font-family:var(--mono);text-transform:none;letter-spacing:0;font-weight:400;color:var(--s400)}
+  .insert{margin-left:auto;display:flex;gap:4px;overflow-x:auto}
+  .insert button{border:1px solid var(--s200);background:#fff;border-radius:3px;font-family:var(--mono);
+                 font-size:10.5px;padding:2px 6px;color:var(--s700);text-transform:none;letter-spacing:0;font-weight:400}
+  .insert button:hover{border-color:var(--s950);color:var(--s950)}
+  textarea#editor{border:0;resize:none;padding:14px 16px;font-family:var(--mono);font-size:12.5px;line-height:1.65;
+                  background:#fff;color:var(--s900);tab-size:2;width:100%;height:100%}
+  .preview{overflow:auto;background:var(--s50);padding:24px 28px 48px}
+
+  /* Article preview (mirrors web/ reader) */
+  .art-meta{font-family:var(--mono);font-size:11px;color:var(--s500);display:flex;gap:8px;align-items:center}
+  .badge{font-family:var(--sans);font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;
+         border:1px solid var(--s300);background:#fff;color:var(--s700);border-radius:3px;padding:1px 7px}
+  .badge.soft{border-color:transparent;background:var(--s100);text-transform:none;letter-spacing:0;font-weight:500}
+  .art-title{font-family:var(--serif);font-size:28px;line-height:1.15;font-weight:700;margin:10px 0 8px;letter-spacing:-.01em}
+  .art-sum{color:var(--s600);font-size:14px;line-height:1.6;margin:0 0 10px}
+  .tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:22px}
+  .tag{font-family:var(--mono);font-size:10px;background:var(--s100);color:var(--s600);border-radius:3px;padding:1px 6px}
+  .md h1{font-family:var(--serif);font-size:24px;margin:30px 0 12px}
+  .md h2{font-family:var(--serif);font-size:19px;margin:30px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--s200)}
+  .md h3{font-size:15px;margin:22px 0 8px;color:var(--s900)}
+  .md p{color:var(--s700);line-height:1.7;margin:12px 0}
+  .md ul{color:var(--s700);line-height:1.6;padding-left:22px;margin:12px 0}
+  .md li{margin:4px 0}
+  .md blockquote{margin:18px 0;border-left:4px solid var(--s950);background:rgba(245,245,244,.7);padding:10px 14px;
+                 font-style:italic;color:var(--s700);border-radius:0 4px 4px 0}
+  .md code{font-family:var(--mono);font-size:11px;background:var(--s100);border:1px solid rgba(231,229,228,.8);
+           border-radius:3px;padding:1px 5px;color:var(--s800)}
+  .md strong{color:var(--s950)}
+  .md a{color:var(--s950);font-weight:500;text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--s400)}
+  .md pre{background:var(--s950);color:var(--s100);border-radius:4px;padding:14px;overflow:auto;font-family:var(--mono);font-size:11.5px;margin:18px 0}
+  .md pre code{background:none;border:0;padding:0;color:inherit}
+  .blk-err{border:1px solid var(--s300);background:var(--s100);border-radius:4px;padding:12px;font-family:var(--mono);font-size:11px;margin:14px 0}
+  figure{margin:22px 0}
+  .ph{border:1px solid var(--s200);border-radius:4px;display:grid;place-items:center;color:var(--s600);
+      font-family:var(--mono);font-size:11px;min-height:120px}
+  .ph span{background:#fff;border:1px solid var(--s200);border-radius:3px;padding:3px 8px}
+  figcaption{text-align:center;font-size:11.5px;color:var(--s600);margin-top:8px}
+  .card{border:1px solid var(--s200);background:#fff;border-radius:4px;margin:22px 0;overflow:hidden}
+  .card-h{padding:12px 16px;border-bottom:1px solid var(--s200)}
+  .card-h h4{margin:0;font-size:13px}
+  .card-h p{margin:3px 0 0;color:var(--s500);font-size:11px}
+  .tabs{display:flex;gap:4px;padding:10px 16px 0}
+  .tabs span{font-size:11px;border:1px solid var(--s200);border-radius:3px;padding:3px 8px;color:var(--s600)}
+  .tabs span.on{background:var(--s950);color:var(--s50);border-color:var(--s950)}
+  .bars{padding:14px 16px;display:grid;gap:10px}
+  .bar{display:grid;grid-template-columns:150px 1fr 60px;gap:10px;align-items:center;font-size:11.5px;color:var(--s700)}
+  .bar .track{height:14px;background:var(--s100);border-radius:2px;overflow:hidden}
+  .bar .fill{height:100%}
+  .bar .v{font-family:var(--mono);text-align:right;color:var(--s950)}
+  table{width:100%;border-collapse:collapse;font-size:11.5px}
+  th,td{text-align:left;padding:8px 14px;border-bottom:1px solid var(--s100)}
+  th{background:var(--s50);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--s500)}
+  td.hl,th.hl{background:rgba(245,245,244,.8);font-weight:600;color:var(--s950)}
+  .pill{background:var(--s950);color:var(--s50);border-radius:3px;padding:1px 6px;font-weight:700}
+  .demo{position:relative}
+  .demo .launch{position:absolute;inset:auto 0 18px 0;margin:auto;width:max-content}
+
+  /* Bottom panels */
+  .bottom{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);border-top:1px solid var(--s200);min-height:0}
+  .bottom>div{display:grid;grid-template-rows:30px minmax(0,1fr);min-height:0}
+  .bottom>div+div{border-left:1px solid var(--s200)}
+  .bottom .pane-head{height:30px}
+  #lint{list-style:none;margin:0;padding:6px 0;overflow:auto;background:#fff}
+  #lint li{display:grid;grid-template-columns:18px 1fr auto;gap:6px;padding:5px 12px;font-size:12px;cursor:default}
+  #lint li[data-line]{cursor:pointer}
+  #lint li[data-line]:hover{background:var(--s50)}
+  #lint .sev{font-size:10px;line-height:18px}
+  #lint .loc{font-family:var(--mono);font-size:10.5px;color:var(--s400)}
+  #lint .ok{color:var(--s500)}
+  .count{font-family:var(--mono);text-transform:none;letter-spacing:0;font-weight:400;color:var(--s400)}
+  #gitlog{margin:0;overflow:auto;background:var(--s950);color:var(--s300);font-family:var(--mono);font-size:11px;
+          line-height:1.6;padding:8px 12px;white-space:pre-wrap}
+  #gitlog .cmd{color:#fff}
+  #gitlog .ok{color:var(--s400)}
+  #gitlog .err{color:#fff;text-decoration:underline wavy var(--s500)}
+  #gitlog .note{color:var(--s500)}
+
+  /* Modal */
+  .modal{position:fixed;inset:0;background:rgba(12,10,9,.45);display:grid;place-items:center;z-index:10}
+  .modal[hidden]{display:none}
+  .dialog{width:min(860px,94vw);max-height:88vh;background:#fff;border-radius:6px;border:1px solid var(--s300);
+          display:grid;grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden;box-shadow:0 20px 60px rgba(12,10,9,.25)}
+  .dlg-h{padding:16px 20px;border-bottom:1px solid var(--s200)}
+  .dlg-h h2{font-family:var(--serif);margin:0 0 4px;font-size:20px}
+  .dlg-h p{margin:0;color:var(--s600);font-size:12px}
+  .dlg-b{overflow:auto;padding:16px 20px;display:grid;gap:14px}
+  .dlg-f{padding:12px 20px;border-top:1px solid var(--s200);display:flex;gap:8px;justify-content:flex-end;align-items:center;background:var(--s50)}
+  .dlg-f .warn{margin-right:auto;font-size:11.5px;color:var(--s600)}
+  .checks{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+  .checks li{display:flex;gap:8px;font-size:12px;align-items:baseline}
+  .checks code{font-family:var(--mono);font-size:11px}
+  .sect{font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--s400);margin:0 0 6px}
+  .diff{margin:0;border:1px solid var(--s200);border-radius:4px;font-family:var(--mono);font-size:11px;line-height:1.55;
+        max-height:280px;overflow:auto;background:var(--s50)}
+  .diff div{padding:0 10px;white-space:pre-wrap}
+  .diff .add{background:#fff;box-shadow:inset 3px 0 0 var(--s950)}
+  .diff .del{color:var(--s400);text-decoration:line-through}
+  .diff .hdr{color:var(--s500);background:var(--s100)}
+  .steps{list-style:none;margin:0;padding:0;font-family:var(--mono);font-size:11.5px;display:grid;gap:3px}
+  .steps li{color:var(--s400)}
+  .steps li.run{color:var(--s950)}
+  .steps li.done{color:var(--s600)}
+  .steps li.done::before{content:"✓ "}
+  .steps li.run::before{content:"› "}
+  .steps li:not(.run):not(.done)::before{content:"· "}
+  .toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--s950);color:var(--s50);
+         padding:8px 14px;border-radius:4px;font-size:12px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
+  .toast.on{opacity:1}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">nacfson<span class="sep">/</span>Blog Studio<span class="local">127.0.0.1:4321 · local only</span></div>
+  <div class="branch" title="Draft branch (own worktree)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="8" r="2"/><path d="M6 7v10M18 10c0 4-6 3-12 7"/></svg>
+    <span id="branch"></span>
+  </div>
+  <div class="status" id="status"></div>
+  <div class="spacer"></div>
+  <button class="btn" id="saveBtn">Save <kbd>Ctrl S</kbd></button>
+  <button class="btn primary" id="publishBtn">Publish…</button>
+</header>
+
+<div class="app">
+  <aside class="side">
+    <button class="btn block" id="newBtn">+ New draft</button>
+    <h3>Drafts</h3>
+    <ul id="draftList"></ul>
+    <h3>Published · <span style="font-family:var(--mono);text-transform:none;letter-spacing:0">origin/main</span></h3>
+    <ul id="pubList"></ul>
+  </aside>
+
+  <main class="main">
+    <section class="fm">
+      <label class="wide2">Title <input id="f-title" class="title-in" autocomplete="off"></label>
+      <label><span>Slug <span class="hint" id="slugHint"></span></span><input id="f-slug" autocomplete="off"></label>
+      <label>Date <input id="f-date" type="date"></label>
+      <label>Topic
+        <select id="f-topic">
+          <option value="">Choose…</option>
+          <option value="cloud-native">Cloud Native</option>
+          <option value="zero-trust">Zero Trust</option>
+          <option value="ai-agents">AI Agents</option>
+          <option value="open-source">Open Source</option>
+        </select>
+      </label>
+      <label class="wide">Summary <input id="f-summary" autocomplete="off" placeholder="One or two sentences for the card and article deck"></label>
+      <label>Project <input id="f-project" autocomplete="off" placeholder="optional"></label>
+      <label>Tags <input id="f-tags" autocomplete="off" placeholder="comma, separated"></label>
+    </section>
+
+    <div class="split">
+      <div class="pane">
+        <div class="pane-head">Markdown <span class="muted" id="filePath"></span>
+          <span class="insert" aria-label="Insert block">
+            <button data-ins="blogPicture">blogPicture</button>
+            <button data-ins="benchmarkChart">benchmarkChart</button>
+            <button data-ins="benchmarkTable">benchmarkTable</button>
+            <button data-ins="blogIframeTabs">blogIframeTabs</button>
+            <button data-ins="scrollHero">scrollHero</button>
+          </span>
+        </div>
+        <textarea id="editor" spellcheck="false" aria-label="Markdown body"></textarea>
+      </div>
+      <div class="pane">
+        <div class="pane-head">Preview <span class="muted">MarkdownDispatcher · same renderer as blog.nacfson.cloud</span></div>
+        <div class="preview" id="preview"></div>
+      </div>
+    </div>
+
+    <section class="bottom">
+      <div>
+        <div class="pane-head">Checks <span class="count" id="lintCount"></span></div>
+        <ul id="lint"></ul>
+      </div>
+      <div>
+        <div class="pane-head">Git activity <span class="muted">simulated in this mockup</span></div>
+        <pre id="gitlog"></pre>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+    <div class="dlg-h">
+      <h2 id="dlgTitle">Publish to blog.nacfson.cloud</h2>
+      <p id="dlgSub"></p>
+    </div>
+    <div class="dlg-b" id="dlgBody"></div>
+    <div class="dlg-f">
+      <span class="warn" id="dlgWarn">Pushes directly to <b>origin/main</b>. Flux syncs the live site in ~30s.</span>
+      <button class="btn" id="dlgCancel">Cancel</button>
+      <button class="btn primary" id="dlgConfirm">Push to main</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- Sample post bodies (kept outside JS to avoid escaping backticks) -->
+<script type="text/plain" id="body-agents">Most agent demos assume a laptop and an API key in an environment variable. On **nacfson_pipeline** I wanted the opposite: agents that run as ordinary tenant workloads, with no credential ever resident in pod memory.
+
+## 1. The gateway pattern
+
+Every model call leaves the namespace through `vault-ai-proxy`, which injects the provider key at the wire level. The agent pod only knows the in-cluster URL.
+
+```blogPicture
+{
+  "src": "/content/assets/ai-gateway-architecture.svg",
+  "alt": "Agent pod calling vault-ai-proxy, which injects the provider key from OpenBao",
+  "caption": "Figure 1: Agents never hold the provider key.",
+  "aspectRatio": "1200/520"
+}
+```
+
+> The safest secret is the one the workload never sees.
+
+## 2. What it costs
+
+1. Measured on the 2-OCPU VPS node
+2. 1,000 sequential completions
+
+```benchmarkChart
+{
+  "title": "Added latency per request",
+  "subtitle": "Lower is better",
+  "unit": "ms",
+  "series": [
+    { "name": "Direct to provider", "value": 0 },
+    { "name": "vault-ai-proxy", "value": 1.8 },
+    { "name": "Hosted gateway", "value": 38 }
+  ]
+}
+```
+
+## 3. Comparison
+
+```benchmarkTable
+{
+  "title": "Credential exposure",
+  "columns": ["Approach", "Key in pod", "Rotation", "Egress"],
+  "highlightColumn": 1,
+  "rows": [
+    { "metric": "Env var", "values": ["Plaintext", "Redeploy", "Open"] },
+    { "metric": "vault-ai-proxy", "values": ["**None**", "Live", "Cilium FQDN"] }
+  ]
+}
+```
+
+- Keys rotate in OpenBao without touching agents
+- Cilium restricts egress to the proxy only
+</script>
+<script type="text/plain" id="body-cilium">How we replaced Flannel and plaintext Kubernetes Secrets with Cilium eBPF, Hubble, and a Go PostgreSQL wire proxy.
+
+## 1. Zero-Plaintext Cluster Architecture
+
+Credentials stay inside **OpenBao** and are injected at the wire protocol level.
+
+```blogPicture
+{
+  "src": "/content/assets/cilium-vault-architecture.svg",
+  "alt": "Packet path from Traefik through Cilium to vault-db-proxy",
+  "caption": "Figure 1: End-to-end packet path.",
+  "aspectRatio": "1200/520"
+}
+```
+
+## 2. Results
+
+```benchmarkTable
+{
+  "title": "Tenant Security Matrix",
+  "columns": ["Capability", "nacfson_pipeline", "Default Helm"],
+  "highlightColumn": 1,
+  "rows": [
+    { "metric": "DB credentials in pod", "values": ["**0 plaintext**", "Secret"] }
+  ]
+}
+```
+</script>
+
+<script>
+(() => {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const TODAY = '2026-11-04';
+  const PUBLISH_BRANCH = 'main';
+  const TOPICS = { 'cloud-native': 'Cloud Native', 'zero-trust': 'Zero Trust', 'ai-agents': 'AI Agents', 'open-source': 'Open Source' };
+  const BLOCKS = ['scrollHero', 'blogPicture', 'blogIframeTabs', 'benchmarkChart', 'benchmarkTable'];
+  const KNOWN_ASSETS = new Set([
+    '/content/assets/cilium-vault-architecture.svg',
+    '/content/assets/ai-gateway-architecture.svg',
+  ]);
+  const RAMP = ['#0c0a09', '#57534e', '#a8a29e', '#d6d3d1'];
+
+  const TEMPLATES = {
+    blogPicture: '{\n  "src": "/content/assets/your-figure.svg",\n  "alt": "Describe the image",\n  "caption": "Figure N: …",\n  "aspectRatio": "1200/520"\n}',
+    benchmarkChart: '{\n  "title": "Metric (lower is better)",\n  "unit": "ms",\n  "series": [\n    { "name": "Baseline", "value": 4.1 },\n    { "name": "Ours", "value": 0.6 }\n  ]\n}',
+    benchmarkTable: '{\n  "title": "Comparison",\n  "columns": ["Capability", "Ours", "Default"],\n  "highlightColumn": 1,\n  "rows": [\n    { "metric": "Row", "values": ["**Best**", "Other"] }\n  ]\n}',
+    blogIframeTabs: '{\n  "mountStrategy": "click-or-center",\n  "height": "520px",\n  "tabs": [\n    {\n      "label": "Live demo",\n      "captionTitle": "What it shows",\n      "src": "/content/demos/your-demo.html",\n      "poster": "/content/assets/your-demo-poster.svg"\n    }\n  ]\n}',
+    scrollHero: '{\n  "ariaLabel": "Article hero",\n  "aspectRatio": "1600/760",\n  "baseImage": "/content/assets/hero-bg.svg",\n  "layers": [\n    { "src": "/content/assets/hero-front.svg", "depth": 0.9 }\n  ]\n}',
+  };
+
+  // ---------- State ----------
+  let seq = 0;
+  const mk = (o) => Object.assign({
+    id: ++seq, project: '', summary: '', tags: [], body: '',
+    slugTouched: true, dirty: false, ahead: 0, published: null, savedSnapshot: null, autosavedAt: null,
+  }, o);
+
+  const posts = [
+    mk({
+      title: 'Zero-Plaintext K3s: Cilium eBPF, OpenBao & Go Wire Proxies', slug: 'cilium-zero-plaintext-k3s',
+      date: '2026-10-24', topic: 'cloud-native', project: 'nacfson-pipeline',
+      summary: 'Replacing Flannel and plaintext Secrets with Cilium, Hubble, and a Go wire proxy.',
+      tags: ['kubernetes', 'cilium', 'openbao'], body: $('body-cilium').textContent.trim() + '\n',
+    }),
+    mk({
+      title: 'Running AI Agents on K3s Without Holding a Single API Key', slug: 'ai-agents-without-api-keys',
+      date: TODAY, topic: 'ai-agents', project: 'nacfson_pipeline',
+      summary: 'Routing every model call through vault-ai-proxy so agent pods never see a provider key.',
+      tags: ['ai-agents', 'openbao', 'cilium'], body: $('body-agents').textContent.trim() + '\n', ahead: 2,
+    }),
+  ];
+  // First post is already live and has no local branch changes.
+  posts[0].published = serialize(posts[0]);
+  posts[0].savedSnapshot = posts[0].published;
+  posts[1].savedSnapshot = serialize(posts[1]);
+  let current = posts[1];
+
+  // ---------- Helpers ----------
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  const slugify = (t) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 64);
+  const shortHash = () => Math.random().toString(16).slice(2, 9);
+  const filePath = (p) => `content/posts/${p.date}-${p.slug}.md`;
+  const worktree = (p) => `.worktrees/studio-${p.slug}`;
+  const now = () => new Date().toTimeString().slice(0, 8);
+  // internal/content only strips the outer quotes (no escape handling), so inner quotes stay raw.
+  function q(s) { return '"' + String(s) + '"'; }
+
+  function serialize(p) {
+    const fm = ['---', `title: ${q(p.title)}`, `slug: ${q(p.slug)}`, `date: ${q(p.date)}`, `topic: ${q(p.topic)}`];
+    if (p.project) fm.push(`project: ${q(p.project)}`);
+    fm.push(`summary: ${q(p.summary)}`);
+    fm.push(`tags: [${p.tags.map(q).join(', ')}]`);
+    fm.push('---', '');
+    return fm.join('\n') + p.body;
+  }
+
+  function stateOf(p) {
+    if (p.dirty) return 'dirty';
+    if (p.published !== null && p.savedSnapshot === p.published) return 'published';
+    return 'saved';
+  }
+
+  // ---------- Renderer (port of web/src/components/MarkdownDispatcher.tsx) ----------
+  function inline(text) {
+    return text.split(/(`[^`]+`|\*\*[^*]+\*\*|\[[^\]]+\]\([^)]+\))/g).map((part) => {
+      if (part.startsWith('`') && part.endsWith('`') && part.length > 1) return `<code>${esc(part.slice(1, -1))}</code>`;
+      if (part.startsWith('**') && part.endsWith('**') && part.length > 3) return `<strong>${esc(part.slice(2, -2))}</strong>`;
+      const m = part.match(/^\[(.*?)\]\((.*?)\)$/);
+      if (m) {
+        const href = /^(https?:\/\/|\/|#)/.test(m[2]) ? m[2] : '#';
+        return `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(m[1])}</a>`;
+      }
+      return esc(part);
+    }).join('');
+  }
+
+  function prose(block) {
+    const t = block.trim();
+    if (!t) return '';
+    if (t.startsWith('# ')) return `<h1>${inline(t.slice(2))}</h1>`;
+    if (t.startsWith('## ')) return `<h2>${inline(t.slice(3))}</h2>`;
+    if (t.startsWith('### ')) return `<h3>${inline(t.slice(4))}</h3>`;
+    if (t.startsWith('>')) return `<blockquote>${inline(t.split('\n').map((l) => l.replace(/^>\s?/, '')).join('\n'))}</blockquote>`;
+    if (t.startsWith('- ') || t.startsWith('* ')) {
+      const items = t.split('\n').filter((l) => l.startsWith('- ') || l.startsWith('* '));
+      return `<ul>${items.map((i) => `<li>${inline(i.replace(/^[-*]\s+/, ''))}</li>`).join('')}</ul>`;
+    }
+    return `<p>${inline(t)}</p>`;
+  }
+
+  function placeholder(label, ratio, extra = '') {
+    const ar = ratio ? `aspect-ratio:${esc(ratio.replace('/', ' / '))};` : '';
+    return `<div class="ph hatch" style="${ar}">${extra}<span>${esc(label)}</span></div>`;
+  }
+
+  function block(lang, d) {
+    switch (lang) {
+      case 'blogPicture': {
+        const src = d.src || d.lightSrc || d.darkSrc || '';
+        return `<figure style="max-width:${esc(d.maxWidth || '100%')}">${placeholder(src || 'no src', d.aspectRatio)}` +
+               (d.caption ? `<figcaption>${esc(d.caption)}</figcaption>` : '') + '</figure>';
+      }
+      case 'scrollHero':
+        return `<div style="margin:0 0 22px">${placeholder('scrollHero · ' + (d.layers || []).length + ' layers · ' + (d.baseImage || ''), d.aspectRatio || '16/9')}</div>`;
+      case 'blogIframeTabs': {
+        const tabs = d.tabs || [];
+        const t0 = tabs[0] || {};
+        const src = t0.src || (t0.panels && t0.panels[0] && t0.panels[0].src) || '';
+        return `<div class="card"><div class="tabs">${tabs.map((t, i) => `<span class="${i ? '' : 'on'}">${esc(t.label || 'Tab')}</span>`).join('')}</div>` +
+          `<div style="padding:12px 16px"><div class="demo">${placeholder('poster → ' + src, null)}` +
+          `<button class="btn primary launch" type="button">Launch Interactive Demo</button></div>` +
+          (t0.captionTitle ? `<p style="margin:10px 0 0;font-weight:600">${esc(t0.captionTitle)}</p>` : '') + '</div></div>';
+      }
+      case 'benchmarkChart': {
+        const tab = d.tabs && d.tabs.length ? d.tabs[0] : null;
+        const series = (tab ? tab.series : d.series) || [];
+        const unit = (tab && tab.unit) || d.unit || '';
+        const max = Math.max(1, ...series.map((s) => Number(s.value) || 0));
+        return `<div class="card"><div class="card-h"><h4>${esc(d.title || '')}</h4>${d.subtitle ? `<p>${esc(d.subtitle)}</p>` : ''}</div>` +
+          (d.tabs && d.tabs.length > 1 ? `<div class="tabs">${d.tabs.map((t, i) => `<span class="${i ? '' : 'on'}">${esc(t.label)}</span>`).join('')}</div>` : '') +
+          `<div class="bars">${series.map((s, i) => `<div class="bar"><span>${esc(s.name)}</span><div class="track"><div class="fill" style="width:${((Number(s.value) || 0) / max) * 100}%;background:${RAMP[i % RAMP.length]}"></div></div><span class="v">${esc(s.value)}${esc(unit)}</span></div>`).join('')}</div></div>`;
+      }
+      case 'benchmarkTable': {
+        const cols = d.columns || [];
+        const rows = (d.rows || []).map((r) => Array.isArray(r) ? r : [r.metric, ...(r.values || [])]);
+        const cell = (v, i) => {
+          const s = String(v ?? '');
+          const b = s.match(/^\*\*(.*?)\*\*$/);
+          return `<td class="${d.highlightColumn === i ? 'hl' : ''}">${b ? `<span class="pill">${esc(b[1])}</span>` : esc(s)}</td>`;
+        };
+        return `<div class="card">${d.title ? `<div class="card-h"><h4 style="font-size:11px;text-transform:uppercase;letter-spacing:.06em">${esc(d.title)}</h4></div>` : ''}` +
+          `<table><thead><tr>${cols.map((c, i) => `<th class="${d.highlightColumn === i ? 'hl' : ''}">${esc(c)}</th>`).join('')}</tr></thead>` +
+          `<tbody>${rows.map((r) => `<tr>${r.map(cell).join('')}</tr>`).join('')}</tbody></table></div>`;
+      }
+    }
+    return '';
+  }
+
+  const FENCE = /^```([a-zA-Z0-9_-]*)\r?\n([\s\S]*?)\r?\n```(?=\r?\n|$)/gm;
+
+  function renderMarkdown(md) {
+    let out = '', last = 0, m;
+    FENCE.lastIndex = 0;
+    while ((m = FENCE.exec(md))) {
+      out += md.slice(last, m.index).split(/\n\s*\n/).map(prose).join('');
+      const lang = m[1];
+      if (BLOCKS.includes(lang)) {
+        try { out += block(lang, JSON.parse(m[2])); }
+        catch { out += `<div class="blk-err" role="alert">Invalid ${esc(lang)} JSON block</div>`; }
+      } else {
+        out += `<pre><code>${esc(m[2])}</code></pre>`;
+      }
+      last = FENCE.lastIndex;
+    }
+    out += md.slice(last).split(/\n\s*\n/).map(prose).join('');
+    return out;
+  }
+
+  // ---------- Validation (mirrors internal/content parseFrontmatter) + lint ----------
+  function lineAt(text, idx) { return text.slice(0, idx).split('\n').length; }
+
+  function validate(p) {
+    const issues = [];
+    const err = (msg, field, line) => issues.push({ sev: 'error', msg, field, line });
+    const warn = (msg, field, line) => issues.push({ sev: 'warn', msg, field, line });
+
+    if (!p.title.trim()) err('title is required', 'title');
+    if (!p.slug) err('slug is required', 'slug');
+    else if (!/^[A-Za-z0-9_-]+$/.test(p.slug)) err('slug may only contain letters, digits, - and _', 'slug');
+    else if (posts.some((o) => o !== p && o.slug === p.slug)) err(`slug "${p.slug}" is already used by another post`, 'slug');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(p.date)) err('date must be YYYY-MM-DD', 'date');
+    if (!TOPICS[p.topic]) err('topic must be one of cloud-native, zero-trust, ai-agents, open-source', 'topic');
+    if (!p.summary.trim()) warn('summary is empty: the home-page card will have no description', 'summary');
+
+    const body = p.body;
+    FENCE.lastIndex = 0;
+    let m;
+    while ((m = FENCE.exec(body))) {
+      if (BLOCKS.includes(m[1])) {
+        try { JSON.parse(m[2]); }
+        catch (e) { err(`${m[1]}: invalid JSON (${e.message.replace(/^JSON\.parse: /, '')})`, null, lineAt(body, m.index)); }
+      }
+    }
+
+    // Blank out fenced blocks and inline code (keeping line positions) before prose lint.
+    const prosey = body
+      .replace(FENCE, (s) => s.replace(/[^\n]/g, ' '))
+      .replace(/`[^`\n]*`/g, (s) => ' '.repeat(s.length));
+    const rules = [
+      [/!\[[^\]]*\]\([^)]*\)/, 'Markdown images don\'t render: use a blogPicture block'],
+      [/^[ \t]*\d+\.[ \t]/m, 'Ordered lists render as a plain paragraph: use "-" bullets'],
+      [/^[ \t]*\|.*\|[ \t]*$/m, 'Pipe tables don\'t render: use a benchmarkTable block'],
+      [/(^|[^*\w])[*_](?![\s*_])[^*_\n]+?(?<![\s*_])[*_](?![*\w])/m, 'Italics aren\'t supported: text will show literal * or _'],
+      [/<\/?[a-zA-Z][^>\n]*>/, 'Raw HTML is shown as text, not rendered'],
+      [/^# /m, 'Body H1 duplicates the article title: start sections at ##'],
+    ];
+    for (const [re, msg] of rules) {
+      const r = re.exec(prosey);
+      if (r) warn(msg, null, lineAt(prosey, r.index + (r[1] ? r[1].length : 0)));
+    }
+    const refRe = /\/content\/(assets|demos)\/[A-Za-z0-9._\/-]+/g;
+    let r;
+    while ((r = refRe.exec(body))) {
+      if (!KNOWN_ASSETS.has(r[0])) warn(`${r[0]} not found in this draft's worktree`, null, lineAt(body, r.index));
+    }
+    return issues;
+  }
+
+  // ---------- Diff (line LCS) ----------
+  function diffLines(a, b) {
+    const A = a ? a.split('\n') : [], B = b.split('\n');
+    const n = A.length, m = B.length;
+    const L = Array.from({ length: n + 1 }, () => new Uint16Array(m + 1));
+    for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--)
+      L[i][j] = A[i] === B[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+    const out = [];
+    let i = 0, j = 0;
+    while (i < n && j < m) {
+      if (A[i] === B[j]) { out.push([' ', A[i]]); i++; j++; }
+      else if (L[i + 1][j] >= L[i][j + 1]) out.push(['-', A[i++]]);
+      else out.push(['+', B[j++]]);
+    }
+    while (i < n) out.push(['-', A[i++]]);
+    while (j < m) out.push(['+', B[j++]]);
+    return out;
+  }
+
+  // ---------- Git log (simulated) ----------
+  function log(kind, text) {
+    const el = $('gitlog');
+    const span = document.createElement('span');
+    span.className = kind;
+    span.textContent = (kind === 'cmd' ? '$ ' : '  ') + text + '\n';
+    el.appendChild(span);
+    el.scrollTop = el.scrollHeight;
+  }
+  function toast(msg) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.add('on');
+    clearTimeout(toast.h);
+    toast.h = setTimeout(() => t.classList.remove('on'), 1800);
+  }
+
+  // ---------- Rendering ----------
+  const fields = ['title', 'slug', 'date', 'topic', 'summary', 'project', 'tags'];
+
+  function loadForm() {
+    $('f-title').value = current.title;
+    $('f-slug').value = current.slug;
+    $('f-date').value = current.date;
+    $('f-topic').value = current.topic;
+    $('f-summary').value = current.summary;
+    $('f-project').value = current.project;
+    $('f-tags').value = current.tags.join(', ');
+    $('editor').value = current.body;
+  }
+
+  function renderAll() {
+    const issues = validate(current);
+    const errors = issues.filter((i) => i.sev === 'error');
+
+    // Header
+    $('branch').textContent = `studio/${current.slug || '…'}`;
+    const st = stateOf(current);
+    const stText = {
+      dirty: `Unsaved changes${current.autosavedAt ? ' · autosaved to worktree ' + current.autosavedAt : ''}`,
+      saved: current.ahead === 0 && current.published === null
+        ? 'New draft · nothing committed yet'
+        : `Saved locally · ${current.ahead} commit${current.ahead === 1 ? '' : 's'} not on ${PUBLISH_BRANCH}`,
+      published: `Published · in sync with origin/${PUBLISH_BRANCH}`,
+    }[st];
+    $('status').innerHTML = `<span class="dot ${st === 'dirty' ? 'dirty' : st === 'saved' ? 'saved' : 'pub'}"></span>${esc(stText)}`;
+    $('saveBtn').disabled = !current.dirty;
+    $('publishBtn').disabled = st === 'published';
+    $('filePath').textContent = filePath(current);
+    $('slugHint').textContent = current.slugTouched ? '' : '(auto)';
+
+    // Field error highlighting
+    for (const f of fields) $('f-' + f).classList.toggle('bad', errors.some((e) => e.field === f));
+
+    // Sidebar
+    const item = (p) => {
+      const s = stateOf(p);
+      const label = s === 'saved' && p.ahead === 0 && p.published === null
+        ? 'new' : { dirty: 'unsaved', saved: 'saved', published: 'live' }[s];
+      return `<li><button data-id="${p.id}" class="${p === current ? 'active' : ''}">` +
+        `<span class="t">${esc(p.title || 'Untitled')}</span>` +
+        `<span class="m"><span class="dot ${s === 'dirty' ? 'dirty' : s === 'saved' ? 'saved' : 'pub'}"></span>${esc(label)} · ${esc(p.date)}</span></button></li>`;
+    };
+    const drafts = posts.filter((p) => stateOf(p) !== 'published');
+    const pubs = posts.filter((p) => p.published !== null).sort((a, b) => b.date.localeCompare(a.date));
+    $('draftList').innerHTML = drafts.length ? drafts.map(item).join('') : '<li class="empty">No drafts</li>';
+    $('pubList').innerHTML = pubs.length ? pubs.map(item).join('') : '<li class="empty">Nothing published yet</li>';
+
+    // Preview
+    const words = current.body.split(/\s+/).filter(Boolean).length;
+    const mins = Math.max(1, Math.floor(words / 200));
+    $('preview').innerHTML =
+      `<div class="art-meta"><span>${esc(current.date)}</span><span>·</span><span>${mins} min read</span>` +
+      (TOPICS[current.topic] ? `<span class="badge">${esc(TOPICS[current.topic])}</span>` : '') +
+      (current.project ? `<span class="badge soft">${esc(current.project)}</span>` : '') + '</div>' +
+      `<h1 class="art-title">${esc(current.title || 'Untitled')}</h1>` +
+      (current.summary ? `<p class="art-sum">${esc(current.summary)}</p>` : '') +
+      `<div class="tags">${current.tags.map((t) => `<span class="tag">#${esc(t)}</span>`).join('')}</div>` +
+      `<div class="md">${renderMarkdown(current.body)}</div>`;
+
+    // Lint
+    const warns = issues.length - errors.length;
+    $('lintCount').textContent = `${errors.length} error${errors.length === 1 ? '' : 's'} · ${warns} warning${warns === 1 ? '' : 's'}`;
+    $('lint').innerHTML = issues.length
+      ? issues.map((i) => `<li ${i.line ? `data-line="${i.line}"` : ''}><span class="sev">${i.sev === 'error' ? '●' : '▲'}</span>` +
+          `<span>${esc(i.msg)}</span><span class="loc">${i.field ? 'frontmatter.' + esc(i.field) : i.line ? 'line ' + i.line : ''}</span></li>`).join('')
+      : '<li><span class="sev ok">✓</span><span class="ok">Passes the production parser. Ready to publish.</span><span></span></li>';
+    return issues;
+  }
+
+  // ---------- Actions ----------
+  let autosaveTimer = null;
+  function onEdit() {
+    current.title = $('f-title').value;
+    if (!current.slugTouched) current.slug = slugify(current.title);
+    current.date = $('f-date').value;
+    current.topic = $('f-topic').value;
+    current.summary = $('f-summary').value;
+    current.project = $('f-project').value.trim();
+    current.tags = $('f-tags').value.split(',').map((t) => t.trim()).filter(Boolean);
+    current.body = $('editor').value;
+    current.dirty = serialize(current) !== current.savedSnapshot;
+    if (!current.slugTouched) $('f-slug').value = current.slug;
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(() => { if (current.dirty) { current.autosavedAt = now(); renderAll(); } }, 700);
+    renderAll();
+  }
+
+  function save() {
+    if (!current.dirty) return;
+    const errors = validate(current).filter((i) => i.sev === 'error');
+    log('cmd', `blog-studio validate ${filePath(current)}`);
+    if (errors.length) {
+      errors.forEach((e) => log('err', '✗ ' + e.msg));
+      log('note', 'nothing committed: fix the errors above');
+      toast('Not saved: fix the errors first');
+      return;
+    }
+    log('ok', '✓ passes internal/content parser');
+    const wt = worktree(current);
+    log('cmd', `git -C ${wt} add ${filePath(current)}`);
+    log('cmd', `git -C ${wt} commit -m "draft(${current.slug}): save ${now()}"`);
+    log('ok', `[studio/${current.slug} ${shortHash()}] draft(${current.slug}): save`);
+    current.savedSnapshot = serialize(current);
+    current.dirty = false;
+    current.ahead += 1;
+    current.autosavedAt = null;
+    renderAll();
+    toast('Saved: committed on studio/' + current.slug);
+  }
+
+  function select(p) {
+    current = p;
+    loadForm();
+    renderAll();
+  }
+
+  function newDraft() {
+    let n = 1;
+    while (posts.some((p) => p.slug === `untitled-${n}`)) n++;
+    const p = mk({ title: '', slug: `untitled-${n}`, date: TODAY, topic: '', body: 'Start writing…\n\n## First section\n', slugTouched: false });
+    p.savedSnapshot = serialize(p);
+    posts.push(p);
+    log('cmd', `git fetch origin ${PUBLISH_BRANCH}`);
+    log('cmd', `git worktree add -b studio/${p.slug} ${worktree(p)} origin/${PUBLISH_BRANCH}`);
+    log('ok', `Preparing worktree (new branch 'studio/${p.slug}')`);
+    select(p);
+    $('f-title').focus();
+  }
+
+  // ---------- Publish flow ----------
+  let publishing = false;
+  function openPublish() {
+    const issues = validate(current);
+    const errors = issues.filter((i) => i.sev === 'error');
+    const isUpdate = current.published !== null;
+    const next = serialize(current);
+    const d = diffLines(current.published || '', next);
+    const adds = d.filter((x) => x[0] === '+').length, dels = d.filter((x) => x[0] === '-').length;
+
+    $('dlgTitle').textContent = isUpdate ? 'Publish update to blog.nacfson.cloud' : 'Publish to blog.nacfson.cloud';
+    $('dlgSub').textContent = `${current.title || 'Untitled'} · ${filePath(current)}`;
+    const check = (ok, html) => `<li><span>${ok ? '✓' : '●'}</span><span>${html}</span></li>`;
+    const otherWarn = issues.length - errors.length;
+    $('dlgBody').innerHTML =
+      `<div><p class="sect">Checks</p><ul class="checks">` +
+        check(!errors.length, errors.length ? `<b>${errors.length} validation error(s)</b>: ${esc(errors.map((e) => e.msg).join('; '))}` : 'Post passes the production parser (<code>internal/content</code>)') +
+        check(!errors.length, 'All posts on <code>main</code> + this one still index cleanly (no duplicate slugs)') +
+        check(true, 'Commit touches <code>content/**</code> only: no image rebuild will be triggered') +
+        (current.dirty ? check(true, 'Unsaved changes will be saved (committed) first') : '') +
+        (otherWarn ? check(true, `${otherWarn} warning(s), not blocking`) : '') +
+      `</ul></div>` +
+      `<div><p class="sect">Changes · +${adds} −${dels}</p><div class="diff">` +
+        `<div class="hdr">${isUpdate ? 'modified' : 'new file'}: ${esc(filePath(current))}</div>` +
+        d.filter((x, i, arr) => x[0] !== ' ' || arr.slice(Math.max(0, i - 2), i + 3).some((y) => y[0] !== ' '))
+          .map((x) => `<div class="${x[0] === '+' ? 'add' : x[0] === '-' ? 'del' : ''}">${x[0]} ${esc(x[1])}</div>`).join('') +
+      `</div></div>` +
+      `<div><p class="sect">Will run</p><ol class="steps" id="steps">` +
+        stepList().map((s) => `<li>${esc(s)}</li>`).join('') + '</ol></div>';
+    $('dlgConfirm').disabled = errors.length > 0;
+    $('dlgConfirm').textContent = `Push to ${PUBLISH_BRANCH}`;
+    $('dlgCancel').textContent = 'Cancel';
+    $('dlgWarn').innerHTML = `Pushes directly to <b>origin/${PUBLISH_BRANCH}</b>. Flux syncs the live site in ~30s.`;
+    $('modal').hidden = false;
+    $('dlgConfirm').focus();
+  }
+
+  function stepList() {
+    const s = current.slug, pw = '.worktrees/studio-publish';
+    return [
+      ...(current.dirty ? [`git -C ${worktree(current)} commit -am "draft(${s}): save"`] : []),
+      `git fetch origin ${PUBLISH_BRANCH}`,
+      `git -C ${pw} reset --hard origin/${PUBLISH_BRANCH}`,
+      `git -C ${pw} merge --squash studio/${s}`,
+      `git -C ${pw} diff --cached --name-only   # must be content/** only`,
+      `blog-studio validate --all ${pw}/content/posts`,
+      `git -C ${pw} commit -m "content: publish ${s}"`,
+      `git -C ${pw} push origin HEAD:${PUBLISH_BRANCH}`,
+      `git worktree remove ${worktree(current)} && git branch -D studio/${s}`,
+    ];
+  }
+
+  function runPublish() {
+    if (publishing) return;
+    publishing = true;
+    $('dlgConfirm').disabled = true;
+    $('dlgCancel').disabled = true;
+    const steps = [...document.querySelectorAll('#steps li')];
+    const cmds = stepList();
+    const hash = shortHash();
+    let i = 0;
+    const tick = () => {
+      if (i > 0) steps[i - 1].className = 'done';
+      if (i === steps.length) return finish(hash);
+      steps[i].className = 'run';
+      log('cmd', cmds[i]);
+      if (cmds[i].includes('diff --cached')) log('ok', filePath(current));
+      if (cmds[i].startsWith('blog-studio validate')) log('ok', `✓ ${posts.filter((p) => p.published !== null || p === current).length} posts index cleanly`);
+      if (cmds[i].includes(' push ')) log('ok', `   ${shortHash()}..${hash}  HEAD -> ${PUBLISH_BRANCH}`);
+      i++;
+      setTimeout(tick, 380);
+    };
+    tick();
+  }
+
+  function finish(hash) {
+    current.dirty = false;
+    current.autosavedAt = null;
+    current.savedSnapshot = serialize(current);
+    current.published = current.savedSnapshot;
+    current.ahead = 0;
+    log('note', `Flux GitRepository/nacfson-blog-content will pick up ${hash}; blog-web hot-reloads in ~30s`);
+    $('dlgWarn').innerHTML = `<b>Published ${esc(hash)}</b> to origin/${PUBLISH_BRANCH}. Live in ~30s at /post/?slug=${esc(current.slug)}`;
+    $('dlgCancel').disabled = false;
+    $('dlgCancel').textContent = 'Done';
+    $('dlgConfirm').textContent = 'Pushed';
+    publishing = false;
+    renderAll();
+  }
+
+  // ---------- Wiring ----------
+  for (const f of fields) $('f-' + f).addEventListener('input', () => {
+    if (f === 'slug') { current.slugTouched = true; current.slug = $('f-slug').value; }
+    onEdit();
+  });
+  $('editor').addEventListener('input', onEdit);
+  $('editor').addEventListener('keydown', (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const ta = e.target, s = ta.selectionStart;
+      ta.setRangeText('  ', s, ta.selectionEnd, 'end');
+      onEdit();
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); }
+    if (e.key === 'Escape' && !$('modal').hidden && !publishing) $('modal').hidden = true;
+  });
+  $('saveBtn').addEventListener('click', save);
+  $('publishBtn').addEventListener('click', openPublish);
+  $('newBtn').addEventListener('click', newDraft);
+  $('dlgCancel').addEventListener('click', () => { $('modal').hidden = true; });
+  $('dlgConfirm').addEventListener('click', runPublish);
+  $('modal').addEventListener('click', (e) => { if (e.target === $('modal') && !publishing) $('modal').hidden = true; });
+
+  document.querySelector('.side').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-id]');
+    if (b) select(posts.find((p) => p.id === Number(b.dataset.id)));
+  });
+  document.querySelector('.insert').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-ins]');
+    if (!b) return;
+    const ta = $('editor');
+    const snippet = '\n```' + b.dataset.ins + '\n' + TEMPLATES[b.dataset.ins] + '\n```\n';
+    ta.setRangeText(snippet, ta.selectionStart, ta.selectionEnd, 'end');
+    ta.focus();
+    onEdit();
+  });
+  $('lint').addEventListener('click', (e) => {
+    const li = e.target.closest('li[data-line]');
+    if (!li) return;
+    const ta = $('editor');
+    const lines = ta.value.split('\n');
+    const ln = Number(li.dataset.line);
+    const start = lines.slice(0, ln - 1).join('\n').length + (ln > 1 ? 1 : 0);
+    ta.focus();
+    ta.setSelectionRange(start, start + (lines[ln - 1] || '').length);
+    ta.scrollTop = Math.max(0, (ln - 4) * 20.6);
+  });
+
+  // Initial log
+  log('note', `blog-studio listening on 127.0.0.1:4321 (repo: ~/Projects/nacfson_blog, publish branch: ${PUBLISH_BRANCH})`);
+  log('cmd', 'git worktree list');
+  log('ok', `${worktree(posts[1])}  [studio/${posts[1].slug}]`);
+  loadForm();
+  renderAll();
+})();
+</script>
+</body>
+</html>
