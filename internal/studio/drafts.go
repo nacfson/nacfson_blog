@@ -97,6 +97,8 @@ type Manager struct {
 	cfg Config
 	git *Git
 	mu  sync.Mutex
+
+	beforePush func() // test hook: runs just before `git push`
 }
 
 // NewManager validates that cfg.Repo is the top level of a git repository.
@@ -575,7 +577,10 @@ type SaveResult struct {
 func (m *Manager) Save(ctx context.Context, key string) (*SaveResult, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	return m.save(ctx, key)
+}
 
+func (m *Manager) save(ctx context.Context, key string) (*SaveResult, error) {
 	d, err := m.get(ctx, key)
 	if err != nil {
 		return nil, err
