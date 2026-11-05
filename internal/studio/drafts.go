@@ -417,6 +417,13 @@ func (m *Manager) fetch(ctx context.Context) error {
 	return err
 }
 
+// UniqueKey returns base if unused as a draft key/branch/worktree, or base-N.
+func (m *Manager) UniqueKey(ctx context.Context, base string) string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.uniqueKey(ctx, base)
+}
+
 func (m *Manager) uniqueKey(ctx context.Context, base string) string {
 	key := base
 	for n := 2; !ValidKey(key) || m.branchExists(ctx, key) || exists(m.worktreeDir(key)); n++ {
