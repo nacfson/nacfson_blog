@@ -148,6 +148,12 @@ export const App: React.FC = () => {
         if (firstKey) {
           const dr = await api.getDraft(firstKey);
           if (!cancelled) applyDraftResponse(dr, dr.draft.state === 'new');
+        } else {
+          const created = await api.createDraft('');
+          if (cancelled) return;
+          applyDraftResponse(created, true);
+          await refreshState();
+          setTimeout(() => titleInputRef.current?.focus(), 0);
         }
       } catch (err) {
         if (!cancelled) {

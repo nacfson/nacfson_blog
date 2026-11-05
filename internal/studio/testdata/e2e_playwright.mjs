@@ -84,8 +84,7 @@ async function main() {
       throw new Error(`Unexpected body background: ${bg}`);
     }
 
-    // 1. Click "+ New draft"
-    await page.getByRole('button', { name: '+ New draft' }).click();
+    // 1. Wait for the initial auto-created draft (or click "+ New draft")
     await page.waitForFunction(() => {
       const el = document.querySelector('[data-testid="header-branch"]');
       return el && el.textContent && el.textContent.startsWith('studio/untitled');
