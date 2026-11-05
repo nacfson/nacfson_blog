@@ -395,7 +395,8 @@ func TestAPI_SSEEventsAndSPA(t *testing.T) {
 		t.Fatalf("expected SSE data line, got %q (err %v)", sc.Text(), sc.Err())
 	}
 
-	// Before SPA is built (only .keep present), GET / returns 503 with instructions.
+	// When the SPA is not built (no index.html), GET / returns 503 with instructions.
+	a.srv.ui = fstest.MapFS{}
 	resp = a.do(t, http.MethodGet, "/", nil)
 	resp.Body.Close()
 	if resp.StatusCode != http.StatusServiceUnavailable {

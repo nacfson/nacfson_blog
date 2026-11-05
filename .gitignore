@@ -3,6 +3,12 @@ node_modules/
 web/node_modules/
 web/.next/
 web/out/
+web/tsconfig.tsbuildinfo
+studio/node_modules/
+studio/dist/
+internal/studio/ui/dist/*
+!internal/studio/ui/dist/.keep
+bin/
 /blog-server
 *.tar.gz
 .worktrees/

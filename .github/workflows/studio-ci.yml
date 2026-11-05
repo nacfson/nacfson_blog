@@ -1,0 +1,67 @@
+name: Blog Studio CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "cmd/blog-studio/**"
+      - "internal/studio/**"
+      - "internal/content/**"
+      - "studio/**"
+      - "web/src/components/**"
+      - "web/src/lib/**"
+      - "Makefile"
+      - ".github/workflows/studio-ci.yml"
+  pull_request:
+    branches:
+      - main
+      - master
+    paths:
+      - "cmd/blog-studio/**"
+      - "internal/studio/**"
+      - "internal/content/**"
+      - "studio/**"
+      - "web/src/components/**"
+      - "web/src/lib/**"
+      - "Makefile"
+      - ".github/workflows/studio-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  studio-ci:
+    name: Studio Quality Gates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: studio/package-lock.json
+
+      - name: Run Studio Go tests
+        run: go test -v -race ./internal/studio/... ./cmd/blog-studio/...
+
+      - name: Install Studio UI dependencies
+        working-directory: studio
+        run: npm ci
+
+      - name: Run Studio UI tests
+        working-directory: studio
+        run: npm test
+
+      - name: Build Studio UI and binary
+        run: make studio

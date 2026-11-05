@@ -54,4 +54,14 @@ func TestDualTrackPipelineInvariants(t *testing.T) {
 			t.Errorf("Dockerfile missing required directive %q", required)
 		}
 	}
+	for _, forbidden := range []string{"blog-studio", "studio/"} {
+		if strings.Contains(df, forbidden) {
+			t.Errorf("Dockerfile must not include local studio artifact %q", forbidden)
+		}
+	}
+	for _, studioExcl := range []string{`"!cmd/blog-studio/**"`, `"!internal/studio/**"`} {
+		if !strings.Contains(wf, studioExcl) {
+			t.Errorf("workflow missing studio exclusion %s", studioExcl)
+		}
+	}
 }

@@ -8,7 +8,9 @@ on:
     paths:
       - "web/**"
       - "cmd/**"
+      - "!cmd/blog-studio/**"
       - "internal/**"
+      - "!internal/studio/**"
       - "go.mod"
       - "go.sum"
       - "Dockerfile"
@@ -20,7 +22,9 @@ on:
     paths:
       - "web/**"
       - "cmd/**"
+      - "!cmd/blog-studio/**"
       - "internal/**"
+      - "!internal/studio/**"
       - "go.mod"
       - "go.sum"
       - "Dockerfile"
