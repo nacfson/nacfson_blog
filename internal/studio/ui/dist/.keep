@@ -1,0 +1,1 @@
+Built SPA assets are copied here by `make studio` before `go build ./cmd/blog-studio`.

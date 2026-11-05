@@ -97,6 +97,8 @@ type Manager struct {
 	cfg Config
 	git *Git
 	mu  sync.Mutex
+
+	beforePush func() // test hook: runs just before `git push`
 }
 
 // NewManager validates that cfg.Repo is the top level of a git repository.
@@ -415,6 +417,13 @@ func (m *Manager) fetch(ctx context.Context) error {
 	return err
 }
 
+// UniqueKey returns base if unused as a draft key/branch/worktree, or base-N.
+func (m *Manager) UniqueKey(ctx context.Context, base string) string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.uniqueKey(ctx, base)
+}
+
 func (m *Manager) uniqueKey(ctx context.Context, base string) string {
 	key := base
 	for n := 2; !ValidKey(key) || m.branchExists(ctx, key) || exists(m.worktreeDir(key)); n++ {
@@ -575,7 +584,10 @@ type SaveResult struct {
 func (m *Manager) Save(ctx context.Context, key string) (*SaveResult, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	return m.save(ctx, key)
+}
 
+func (m *Manager) save(ctx context.Context, key string) (*SaveResult, error) {
 	d, err := m.get(ctx, key)
 	if err != nil {
 		return nil, err

@@ -43,3 +43,21 @@ go test -v -race ./... && go vet ./...
 python3 -m unittest discover -s tests/skills
 python3 .agents/skills/local-ui-verify/scripts/local_ui_verify.py --mode verify
 ```
+
+---
+
+## 4. Blog Studio (`cmd/blog-studio`, `internal/studio`, `studio/`)
+
+Blog Studio is a **local-only**, git-backed writing platform for `nacfson_blog`. It is never deployed and never included in the production container image (`Dockerfile` builds only `./cmd/blog-server`).
+
+### Build & Run
+```bash
+make studio
+./bin/blog-studio --repo . --addr 127.0.0.1:4321 --publish-branch main
+```
+
+### Safety Rules
+- **Loopback Only**: Refuses to listen on non-loopback addresses and rejects non-local `Host` headers or cross-origin mutating requests.
+- **Worktree Isolation**: Every draft lives on its own branch `studio/<slug>` inside `.worktrees/studio-<slug>/`. The author's main checkout is never modified by Save or Publish.
+- **Direct Validated Publish**: Publish squashes the draft onto a detached `.worktrees/studio-publish/` worktree tracking `origin/<publish-branch>`, verifies that only `content/**` paths are touched and all posts pass `internal/content.ValidateDir`, commits `content: publish <slug>`, and pushes directly to `origin/<publish-branch>` (never `--force`).
+
