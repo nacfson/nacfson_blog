@@ -1,5 +1,5 @@
 import React, { useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { EditorState } from '@codemirror/state';
+import { Compartment, EditorState } from '@codemirror/state';
 import { EditorView, keymap, lineNumbers, drawSelection } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
 import { markdown } from '@codemirror/lang-markdown';
@@ -38,6 +38,7 @@ export const Editor = React.forwardRef<EditorHandle, EditorProps>(
   ({ value, filePath, disabled, onChange, onUploadFile }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const viewRef = useRef<EditorView | null>(null);
+    const readOnlyCompRef = useRef(new Compartment());
     const onChangeRef = useRef(onChange);
     onChangeRef.current = onChange;
     const [dragOver, setDragOver] = useState(false);
@@ -52,6 +53,7 @@ export const Editor = React.forwardRef<EditorHandle, EditorProps>(
           history(),
           drawSelection(),
           EditorView.lineWrapping,
+          readOnlyCompRef.current.of(EditorState.readOnly.of(Boolean(disabled))),
           keymap.of([indentWithTab, ...defaultKeymap, ...historyKeymap]),
           markdown({ codeLanguages }),
           EditorView.contentAttributes.of({ 'aria-label': 'Markdown body' }),
@@ -76,6 +78,14 @@ export const Editor = React.forwardRef<EditorHandle, EditorProps>(
       // Initialize once; subsequent external value changes are synced below.
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    useEffect(() => {
+      const view = viewRef.current;
+      if (!view) return;
+      view.dispatch({
+        effects: readOnlyCompRef.current.reconfigure(EditorState.readOnly.of(Boolean(disabled))),
+      });
+    }, [disabled]);
 
     useEffect(() => {
       const view = viewRef.current;
