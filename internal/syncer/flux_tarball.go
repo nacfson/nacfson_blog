@@ -7,13 +7,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/nacfson/nacfson_blog/internal/logx"
 )
 
 const (
@@ -100,6 +102,7 @@ func (s *FluxTarballSyncer) SyncOnce(ctx context.Context) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("failed to create http request: %w", err)
 	}
+	req.Header.Set("traceparent", logx.FormatTraceparent(logx.TraceIDFromContext(ctx)))
 
 	s.mu.RLock()
 	currentETag := s.etag
@@ -274,7 +277,7 @@ func (s *FluxTarballSyncer) Start(ctx context.Context, interval time.Duration) {
 				return
 			case <-ticker.C:
 				if _, err := s.SyncOnce(ctx); err != nil && !errors.Is(err, context.Canceled) {
-					log.Printf("flux syncer periodic update error: %v", err)
+					slog.ErrorContext(ctx, "flux syncer periodic update error", "error", err)
 				}
 			}
 		}

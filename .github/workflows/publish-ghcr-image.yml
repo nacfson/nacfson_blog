@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - master
+    tags:
+      - "v*.*.*"
     paths:
       - "web/**"
       - "cmd/**"
@@ -70,9 +72,93 @@ jobs:
         working-directory: web
         run: npm run build
 
+  log-contract:
+    name: log-contract
+    needs: [quality-gates]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Compute service version
+        id: version
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" && "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+            VERSION="${GITHUB_REF_NAME}"
+          else
+            VERSION="v0.0.0-${GITHUB_SHA::7}"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Build image for log-contract smoke test
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64
+          load: true
+          tags: blog-web:smoke
+          build-args: |
+            VERSION=${{ steps.version.outputs.version }}
+            REVISION=${{ github.sha }}
+          labels: |
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run log smoke scenario and validate with logcheck
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          CID=$(docker run -d -p 18080:8080 \
+            -e FLUX_ARTIFACT_URL="http://127.0.0.1:1/unreachable.tar.gz" \
+            blog-web:smoke)
+          cleanup() {
+            docker rm -f "$CID" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          READY=0
+          for i in $(seq 1 30); do
+            if curl -fsS -H "traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01" http://127.0.0.1:18080/healthz >/dev/null 2>&1; then
+              READY=1
+              break
+            fi
+            sleep 0.5
+          done
+          if [[ "$READY" -ne 1 ]]; then
+            echo "blog-web container failed readiness check" >&2
+            docker logs "$CID" >&2 || true
+            exit 1
+          fi
+
+          curl -fsS -H "traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01" http://127.0.0.1:18080/api/posts >/dev/null
+
+          LONG_NAME=$(printf 'a%.0s' $(seq 1 260))
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "traceparent: 00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01" "http://127.0.0.1:18080/content/assets/${LONG_NAME}")
+          if [[ "$STATUS" != "500" ]]; then
+            echo "Expected HTTP 500 from handled error request, got ${STATUS}" >&2
+            exit 1
+          fi
+
+          docker stop "$CID" >/dev/null
+          docker logs "$CID" > captured.log 2>&1
+          cat captured.log
+          test -s captured.log
+
+          docker run --rm -i \
+            ghcr.io/nacfson/logcheck@sha256:68d833e925a01497d8a60a93d926ce9d2aa2aef2b31f7b31de74f68d22773573 \
+            --format json \
+            --expect-version "${VERSION}" \
+            --expect-service blog-web < captured.log
+
   build-and-push:
     name: Build & Push Multi-Arch Image
-    needs: [quality-gates]
+    needs: [quality-gates, log-contract]
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
@@ -92,15 +178,29 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Compute service version
+        id: version
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" && "${GITHUB_REF_NAME}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+            VERSION="${GITHUB_REF_NAME}"
+          else
+            VERSION="v0.0.0-${GITHUB_SHA::7}"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository_owner }}/blog-web
           tags: |
+            type=semver,pattern={{raw}},enable=${{ github.ref_type == 'tag' }}
             type=sha,prefix=sha-,format=short
             type=sha,prefix=sha-,format=long
             type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
 
       - name: Build and push multi-arch image
         id: build-push
@@ -110,8 +210,14 @@ jobs:
           file: Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
+          build-args: |
+            VERSION=${{ steps.version.outputs.version }}
+            REVISION=${{ github.sha }}
           tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          labels: |
+            ${{ steps.meta.outputs.labels }}
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -121,10 +227,12 @@ jobs:
           TAGS: ${{ steps.meta.outputs.tags }}
           OWNER: ${{ github.repository_owner }}
           COMMIT_SHA: ${{ github.sha }}
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           IMAGE="ghcr.io/${OWNER,,}/blog-web"
           PINNED="${IMAGE}@${DIGEST}"
           echo "Commit SHA:    ${COMMIT_SHA}"
+          echo "Version:       ${VERSION}"
           echo "Image digest:  ${DIGEST}"
           echo "Pinned image:  ${PINNED}"
           echo "Tags:"
@@ -136,6 +244,7 @@ jobs:
             echo "| Field | Value |"
             echo "| :--- | :--- |"
             echo "| Commit SHA | \`${COMMIT_SHA}\` |"
+            echo "| Version | \`${VERSION}\` |"
             echo "| Image digest | \`${DIGEST}\` |"
             echo "| Pinned reference | \`${PINNED}\` |"
             echo

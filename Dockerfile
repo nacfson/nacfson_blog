@@ -10,14 +10,19 @@ RUN npm run build
 FROM --platform=$BUILDPLATFORM golang:1.22-alpine AS go-builder
 ARG TARGETOS
 ARG TARGETARCH
+ARG VERSION=v0.0.0
 WORKDIR /work
 COPY go.mod go.sum* ./
 COPY cmd/ ./cmd/
 COPY internal/ ./internal/
-RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build -trimpath -ldflags="-s -w" -o /out/blog-server ./cmd/blog-server
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build -trimpath -ldflags="-s -w -X main.version=${VERSION}" -o /out/blog-server ./cmd/blog-server
 
 # Stage 3: Minimal secure runtime image (UID 10001:10001, restricted PSS compliant)
 FROM alpine:3.20 AS runtime
+ARG VERSION=v0.0.0
+ARG REVISION=unknown
+LABEL org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.revision="${REVISION}"
 RUN apk add --no-cache ca-certificates && \
     addgroup -g 10001 appgroup && \
     adduser -u 10001 -G appgroup -s /sbin/nologin -D appuser && \

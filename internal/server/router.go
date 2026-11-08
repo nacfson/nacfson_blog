@@ -3,13 +3,103 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/nacfson/nacfson_blog/internal/content"
+	"github.com/nacfson/nacfson_blog/internal/logx"
 )
+
+// HTTPError represents an HTTP 5xx server error when no underlying error was attached.
+type HTTPError struct {
+	StatusCode int
+}
+
+func (e *HTTPError) Error() string {
+	return fmt.Sprintf("HTTP %d %s", e.StatusCode, http.StatusText(e.StatusCode))
+}
+
+type statusRecorder struct {
+	http.ResponseWriter
+	status      int
+	wroteHeader bool
+	err         error
+}
+
+func (sr *statusRecorder) WriteHeader(code int) {
+	if !sr.wroteHeader {
+		sr.status = code
+		sr.wroteHeader = true
+	}
+	sr.ResponseWriter.WriteHeader(code)
+}
+
+func (sr *statusRecorder) Write(b []byte) (int, error) {
+	if !sr.wroteHeader {
+		sr.status = http.StatusOK
+		sr.wroteHeader = true
+	}
+	return sr.ResponseWriter.Write(b)
+}
+
+func (sr *statusRecorder) Unwrap() http.ResponseWriter {
+	return sr.ResponseWriter
+}
+
+func recordServerError(w http.ResponseWriter, err error) {
+	if sr, ok := w.(*statusRecorder); ok {
+		sr.err = err
+	}
+	http.Error(w, err.Error(), http.StatusInternalServerError)
+}
+
+// RequestLogger wraps next with W3C traceparent / 32-lowercase-hex trace_id propagation
+// and Contract v3 HTTP request access logging.
+func RequestLogger(logger *slog.Logger, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		traceID := logx.ResolveOrGenerateTraceID(r.Header.Get("traceparent"))
+		ctx := logx.WithTraceID(r.Context(), traceID)
+		r = r.WithContext(ctx)
+
+		rec := &statusRecorder{
+			ResponseWriter: w,
+			status:         http.StatusOK,
+		}
+		next.ServeHTTP(rec, r)
+
+		duration := time.Since(start).Seconds()
+		l := logger
+		if l == nil {
+			l = slog.Default()
+		}
+
+		msg := fmt.Sprintf("%s %s %d", r.Method, r.URL.Path, rec.status)
+		attrs := []any{
+			"trace_id", traceID,
+			"http.request.method", r.Method,
+			"url.path", r.URL.Path,
+			"http.response.status_code", rec.status,
+			"http.server.request.duration", duration,
+		}
+
+		if rec.status >= http.StatusInternalServerError {
+			err := rec.err
+			if err == nil {
+				err = &HTTPError{StatusCode: rec.status}
+			}
+			attrs = append(attrs, "error", err)
+			l.ErrorContext(ctx, msg, attrs...)
+			return
+		}
+		l.InfoContext(ctx, msg, attrs...)
+	})
+}
 
 // NewHandler constructs and configures the HTTP router for the blog service.
 func NewHandler(store content.ContentStore, activeContentDir func() string, webOutDir string) http.Handler {
@@ -28,7 +118,7 @@ func NewHandler(store content.ContentStore, activeContentDir func() string, webO
 		tag := r.URL.Query().Get("tag")
 		posts, err := store.ListPosts(r.Context(), topic, tag)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			recordServerError(w, err)
 			return
 		}
 		if posts == nil {
@@ -51,7 +141,7 @@ func NewHandler(store content.ContentStore, activeContentDir func() string, webO
 				http.Error(w, "post not found", http.StatusNotFound)
 				return
 			}
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			recordServerError(w, err)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -88,7 +178,7 @@ func NewHandler(store content.ContentStore, activeContentDir func() string, webO
 				http.NotFound(w, r)
 				return
 			}
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			recordServerError(w, err)
 			return
 		}
 		if fi.IsDir() {
@@ -129,7 +219,7 @@ func NewHandler(store content.ContentStore, activeContentDir func() string, webO
 				http.NotFound(w, r)
 				return
 			}
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			recordServerError(w, err)
 			return
 		}
 		if fi.IsDir() {
@@ -192,12 +282,13 @@ func NewHandler(store content.ContentStore, activeContentDir func() string, webO
 		http.NotFound(w, r)
 	})
 
-	// Return handler wrapped with path traversal guard
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// Return handler wrapped with path traversal guard and Contract v3 request logger
+	guarded := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.URL.Path, "..") || strings.Contains(r.URL.RawPath, "..") {
 			http.Error(w, "invalid path", http.StatusBadRequest)
 			return
 		}
 		mux.ServeHTTP(w, r)
 	})
+	return RequestLogger(nil, guarded)
 }
