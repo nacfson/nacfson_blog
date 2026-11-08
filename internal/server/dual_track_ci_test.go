@@ -65,3 +65,47 @@ func TestDualTrackPipelineInvariants(t *testing.T) {
 		}
 	}
 }
+
+func TestLogContractV3WorkflowAndDockerfileInvariants(t *testing.T) {
+	root, err := filepath.Abs("../..")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dfBytes, err := os.ReadFile(filepath.Join(root, "Dockerfile"))
+	if err != nil {
+		t.Fatalf("missing Dockerfile: %v", err)
+	}
+	df := string(dfBytes)
+	for _, required := range []string{
+		"ARG VERSION=v0.0.0",
+		"-X main.version=${VERSION}",
+		"org.opencontainers.image.version",
+		"org.opencontainers.image.revision",
+	} {
+		if !strings.Contains(df, required) {
+			t.Errorf("Dockerfile missing required Contract v3 directive %q", required)
+		}
+	}
+
+	wfBytes, err := os.ReadFile(filepath.Join(root, ".github", "workflows", "publish-ghcr-image.yml"))
+	if err != nil {
+		t.Fatalf("missing workflow file: %v", err)
+	}
+	wf := string(wfBytes)
+	for _, required := range []string{
+		"v0.0.0-${GITHUB_SHA::7}",
+		"org.opencontainers.image.version=",
+		"org.opencontainers.image.revision=",
+		"log-contract:",
+		"ghcr.io/nacfson/logcheck@sha256:68d833e925a01497d8a60a93d926ce9d2aa2aef2b31f7b31de74f68d22773573",
+		"--format json",
+		"--expect-version",
+		"--expect-service blog-web",
+	} {
+		if !strings.Contains(wf, required) {
+			t.Errorf("workflow missing required Contract v3 token %q", required)
+		}
+	}
+}
+

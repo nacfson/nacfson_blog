@@ -5,17 +5,21 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/nacfson/nacfson_blog/internal/logx"
 	"github.com/nacfson/nacfson_blog/internal/syncer"
 )
 
@@ -369,3 +373,76 @@ func TestSyncOnce_NestedContentPath(t *testing.T) {
 		t.Fatalf("unexpected topic file: %q (err=%v)", string(gotTopic), err)
 	}
 }
+
+type syncBuffer struct {
+	mu  sync.Mutex
+	buf bytes.Buffer
+}
+
+func (b *syncBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.Write(p)
+}
+
+func (b *syncBuffer) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.String()
+}
+
+func (b *syncBuffer) Len() int {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.Len()
+}
+
+func TestFluxTarballSyncer_LogsPeriodicErrorAsV3JSONAndPropagatesTraceparent(t *testing.T) {
+	var seenTraceparent atomic.Value
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		seenTraceparent.Store(r.Header.Get("traceparent"))
+		w.WriteHeader(http.StatusBadGateway)
+	}))
+	defer srv.Close()
+
+	var buf syncBuffer
+	prev := slog.Default()
+	t.Cleanup(func() { slog.SetDefault(prev) })
+	slog.SetDefault(logx.New(&buf, "blog-web", "v1.2.3"))
+
+	s := syncer.NewFluxTarballSyncer(srv.URL, t.TempDir(), &mockReloader{})
+	ctx, cancel := context.WithCancel(logx.WithTraceID(context.Background(), "4bf92f3577b34da6a3ce929d0e0e4736"))
+	defer cancel()
+
+	s.Start(ctx, 15*time.Millisecond)
+
+	deadline := time.Now().Add(2 * time.Second)
+	for buf.Len() == 0 {
+		if time.Now().After(deadline) {
+			t.Fatal("timed out waiting for periodic error log line")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	cancel()
+
+	tp, _ := seenTraceparent.Load().(string)
+	if tid, ok := logx.ParseTraceparent(tp); !ok || tid != "4bf92f3577b34da6a3ce929d0e0e4736" {
+		t.Fatalf("expected outbound traceparent with trace_id 4bf92f3577b34da6a3ce929d0e0e4736, got %q", tp)
+	}
+
+	firstLine := strings.Split(strings.TrimSpace(buf.String()), "\n")[0]
+	var m map[string]any
+	if err := json.Unmarshal([]byte(firstLine), &m); err != nil {
+		t.Fatalf("expected JSON log line, got %q: %v", firstLine, err)
+	}
+	if m["level"] != "error" {
+		t.Errorf("expected level=error, got %v", m["level"])
+	}
+	if m["service.name"] != "blog-web" || m["service.version"] != "v1.2.3" {
+		t.Errorf("unexpected service coordinates: %v", m)
+	}
+	if m["exception.message"] == nil || m["exception.type"] == nil {
+		t.Errorf("missing exception fields: %v", m)
+	}
+}
+

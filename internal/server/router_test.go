@@ -1,15 +1,21 @@
 package server_test
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
+	"fmt"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/nacfson/nacfson_blog/internal/content"
+	"github.com/nacfson/nacfson_blog/internal/logx"
 	"github.com/nacfson/nacfson_blog/internal/server"
 )
 
@@ -217,3 +223,104 @@ func TestRouter_NotFoundAndInvalidRequests(t *testing.T) {
 		t.Errorf("expected 404 for /content/assets/nonexistent.svg, got %d", rec.Code)
 	}
 }
+
+type failingStore struct {
+	err error
+}
+
+func (f *failingStore) ListPosts(ctx context.Context, topic, tag string) ([]content.PostSummary, error) {
+	return nil, f.err
+}
+
+func (f *failingStore) GetPost(ctx context.Context, slug string) (*content.Post, error) {
+	return nil, f.err
+}
+
+func TestRouter_RequestLoggingAndTraceparent(t *testing.T) {
+	var buf bytes.Buffer
+	prev := slog.Default()
+	t.Cleanup(func() { slog.SetDefault(prev) })
+	slog.SetDefault(logx.New(&buf, "blog-web", "v1.4.2"))
+
+	h := setupTestServer(t)
+
+	// 1. Request with valid W3C traceparent
+	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
+	req.Header.Set("traceparent", "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+
+	var m map[string]any
+	if err := json.Unmarshal(buf.Bytes(), &m); err != nil {
+		t.Fatalf("expected JSON access log line, got %q (err=%v)", buf.String(), err)
+	}
+	if m["level"] != "info" {
+		t.Errorf("expected level=info, got %v", m["level"])
+	}
+	if m["service.name"] != "blog-web" || m["service.version"] != "v1.4.2" {
+		t.Errorf("unexpected service coordinates: %v", m)
+	}
+	if m["trace_id"] != "4bf92f3577b34da6a3ce929d0e0e4736" {
+		t.Errorf("expected trace_id from traceparent, got %v", m["trace_id"])
+	}
+	if m["http.request.method"] != "GET" || m["url.path"] != "/healthz" {
+		t.Errorf("unexpected method/path: %v", m)
+	}
+	if m["http.response.status_code"] != float64(200) {
+		t.Errorf("expected status 200, got %v", m["http.response.status_code"])
+	}
+	if dur, ok := m["http.server.request.duration"].(float64); !ok || dur < 0 {
+		t.Errorf("expected non-negative duration float, got %v", m["http.server.request.duration"])
+	}
+
+	// 2. Request without traceparent generates 32-lowercase-hex trace_id
+	buf.Reset()
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/posts/missing-slug", nil))
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", rec.Code)
+	}
+	m = nil
+	if err := json.Unmarshal(buf.Bytes(), &m); err != nil {
+		t.Fatalf("expected JSON access log line, got %q (err=%v)", buf.String(), err)
+	}
+	tid, _ := m["trace_id"].(string)
+	if !regexp.MustCompile(`^[0-9a-f]{32}$`).MatchString(tid) {
+		t.Errorf("expected 32-hex generated trace_id, got %q", tid)
+	}
+	if m["http.response.status_code"] != float64(404) || m["level"] != "info" {
+		t.Errorf("expected 404 at level=info, got status=%v level=%v", m["http.response.status_code"], m["level"])
+	}
+
+	// 3. 500 error logs at level=error with innermost unwrapped exception.type and exception.message
+	buf.Reset()
+	pathErr := &os.PathError{Op: "open", Path: "/var/run/blog-content", Err: os.ErrPermission}
+	wrappedErr := fmt.Errorf("index failure: %w", pathErr)
+	errHandler := server.NewHandler(&failingStore{err: wrappedErr}, nil, "")
+	rec = httptest.NewRecorder()
+	errHandler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/posts", nil))
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d", rec.Code)
+	}
+	m = nil
+	if err := json.Unmarshal(buf.Bytes(), &m); err != nil {
+		t.Fatalf("expected JSON access log line, got %q (err=%v)", buf.String(), err)
+	}
+	if m["level"] != "error" {
+		t.Errorf("expected level=error for 500 response, got %v", m["level"])
+	}
+	if m["http.response.status_code"] != float64(500) {
+		t.Errorf("expected http.response.status_code=500, got %v", m["http.response.status_code"])
+	}
+	wantType := fmt.Sprintf("%T", pathErr)
+	if m["exception.type"] != wantType {
+		t.Errorf("expected exception.type=%q, got %v", wantType, m["exception.type"])
+	}
+	if m["exception.message"] != wrappedErr.Error() {
+		t.Errorf("expected exception.message=%q, got %v", wrappedErr.Error(), m["exception.message"])
+	}
+}
+
