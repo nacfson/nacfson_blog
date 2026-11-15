@@ -19,6 +19,13 @@ export const ASCII = {
   font: '500 {px}px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
   camera: { distance: 7, fovDeg: 32, near: 0.1, far: 50 },
   knot: { R: 1.1, tube: 0.34, tubular: 300, radial: 40, p: 2, q: 3, radius: 2.0 },
+  /** View-space directional lights: diffuse + Blinn-Phong specular. */
+  lights: [
+    { dir: [3, 4, 5], k: 0.85 },
+    { dir: [-5, 2, -3], k: 0.7 },
+    { dir: [-2, -3, 4], k: 0.12 },
+  ],
+  light: { ambient: 0.04, specPower: 40, specWeight: 0.45 },
   lum: { gamma: 1.15 },
   edge: { depth: 0.09, normal: 1.35 },
   intro: { ms: 1400 },
