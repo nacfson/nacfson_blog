@@ -46,6 +46,18 @@ describe('HomePage', () => {
     await waitFor(() => expect(screen.getByRole('status')).toBeInTheDocument());
   });
 
+  it('puts the ascii hero band above the article index with a single h1', async () => {
+    mockFetch([]);
+    render(<HomePage />);
+
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole('link', { name: 'Browse articles ↓' })).toHaveAttribute('href', '#articles');
+    const index = document.getElementById('articles');
+    expect(index).not.toBeNull();
+    expect(within(index as HTMLElement).getByRole('navigation', { name: 'Topics' })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('status')).toBeInTheDocument());
+  });
+
   it('shows a friendly "blogger is writing" notice when there are no posts', async () => {
     mockFetch([]);
     render(<HomePage />);

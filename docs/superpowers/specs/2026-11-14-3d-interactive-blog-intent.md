@@ -1,6 +1,6 @@
 # 3D Interactive Blog — Intent
 
-- **Status:** Intent captured; design not started (placement still open, see below)
+- **Status:** Placement decided (homepage hero). See [`2026-11-15-homepage-ascii-hero-design.md`](2026-11-15-homepage-ascii-hero-design.md).
 - **Date:** 2026-11-14
 
 ## Intent

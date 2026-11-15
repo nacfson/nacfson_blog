@@ -1,0 +1,433 @@
+<!doctype html>
+<!-- Reference prototype for docs/superpowers/specs/2026-11-15-homepage-ascii-hero-design.md.
+     Open this file directly in a browser. It is not shipped; port from the <script id="engine"> block. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASCII Hero Without Libraries</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&display=swap">
+<style>
+/* Layout: proof sheet. The hero runs at real size on top; below it, a plain
+   ledger of what three.js was doing and what replaced each part. */
+:root{
+  --bg:#f5f5f4; --surface:#ffffff; --ink:#1c1917; --muted:#57534e; --line:#e7e5e4; --soft:#f0eeec; --focus:#1c1917;
+  --serif:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --sans:Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --bg:#0f0e0d; --surface:#1c1917; --ink:#f5f5f4; --muted:#a8a29e; --line:#2c2724; --soft:#171514; --focus:#f5f5f4; color-scheme:dark; }
+}
+:root[data-theme="dark"]{ --bg:#0f0e0d; --surface:#1c1917; --ink:#f5f5f4; --muted:#a8a29e; --line:#2c2724; --soft:#171514; --focus:#f5f5f4; color-scheme:dark; }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:40px 64px}
+.page{max-width:1240px;margin:0 auto;display:grid;gap:28px}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+a{color:inherit}
+.intro{display:grid;gap:10px;max-width:740px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0}
+.intro h1{font-family:var(--serif);font-weight:700;font-size:clamp(32px,5vw,48px);line-height:1.05;letter-spacing:-.015em;margin:0;text-wrap:balance}
+.intro p{margin:0;color:var(--muted);font-size:16px;max-width:65ch}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.badge{font-family:var(--mono);font-size:12px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 11px}
+.badge b{font-weight:700}
+
+/* Homepage copy, fixed to the blog's look */
+.site{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fafaf9;color:#0c0a09;font-size:14px;line-height:1.5}
+.s-top{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;background:#fff;border-bottom:1px solid #e7e5e4}
+.s-logo{display:flex;gap:10px;align-items:center}
+.s-logo b{width:32px;height:32px;border-radius:4px;background:#0c0a09;color:#fafaf9;display:grid;place-items:center;font-family:var(--serif);font-size:14px}
+.s-logo span{display:grid;line-height:1.15;font-weight:700;font-size:14px}
+.s-logo small{font-family:var(--mono);font-weight:400;font-size:10px;color:#78716c}
+.s-nav{display:flex;gap:24px;font-size:12px;color:#57534e;font-weight:500}
+.s-sub{height:44px;display:flex;align-items:center;gap:28px;padding:0 32px;background:#fff;border-bottom:1px solid #e7e5e4;font-size:12px}
+.s-sub span{font-family:var(--serif);font-weight:700;font-size:13px;padding-right:20px;border-right:1px solid #e7e5e4}
+.s-sub em{font-style:normal;font-weight:600;border-bottom:2px solid #0c0a09;height:44px;display:flex;align-items:center}
+.hero{position:relative;height:clamp(420px,60vh,600px);background:#0c0a09;overflow:hidden;touch-action:pan-y}
+.hero canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.copy{position:relative;z-index:2;padding:64px 32px 0;max-width:470px;pointer-events:none}
+.cap{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#78716c;margin:0 0 14px}
+.copy h2{font-family:var(--serif);font-weight:700;font-size:clamp(40px,5.4vw,60px);line-height:1;letter-spacing:-.02em;margin:0;color:#fafaf9;text-wrap:balance}
+.copy p.lede{margin:16px 0 0;color:#a8a29e;font-size:15.5px;line-height:1.6;max-width:38ch}
+.copy .cta{pointer-events:auto;display:inline-block;margin-top:22px;font-size:13px;font-weight:600;color:#fafaf9;text-underline-offset:4px}
+.hud{position:absolute;right:20px;bottom:14px;z-index:2;font-family:var(--mono);font-size:11px;color:#78716c;font-variant-numeric:tabular-nums;pointer-events:none}
+.replay{position:absolute;left:32px;bottom:18px;z-index:3;font-family:var(--mono);font-size:11px;color:#a8a29e;background:none;border:1px solid #292524;border-radius:4px;padding:4px 10px;cursor:pointer}
+.replay:hover{color:#fafaf9;border-color:#57534e}
+.nogl-note{display:none}
+.hero.nogl .nogl-note{display:block;position:absolute;right:20px;bottom:14px;font-family:var(--mono);font-size:11px;color:#a8a29e}
+.hero.nogl .replay{display:none}
+@media (max-width:760px){ .hero{height:600px} .copy{padding:40px 20px 0} .s-top,.s-sub{padding:0 20px} .replay{left:20px} }
+.s-body{display:grid;grid-template-columns:200px minmax(0,1fr);gap:36px;padding:28px 32px 34px}
+.s-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#a8a29e;margin:0 0 10px}
+.s-rail ul{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.s-rail li{display:flex;justify-content:space-between;padding:7px 12px;border-radius:3px;font-size:13px;color:#57534e}
+.s-rail li i{font-style:normal;font-size:11px;color:#a8a29e}
+.s-rail li.on{background:#0c0a09;color:#fafaf9;font-weight:600}
+.s-rail li.on i{color:#d6d3d1}
+.s-feat{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.s-card{border:1px solid #e7e5e4;background:#fff;border-radius:4px;overflow:hidden;min-width:0}
+.s-plate{height:96px;background-color:#f5f5f4;background-image:repeating-linear-gradient(45deg,#a8a29e 0 1px,transparent 1px 9px);border-bottom:1px solid #e7e5e4}
+.s-cb{padding:12px 14px 14px;display:grid;gap:5px}
+.s-topic{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#78716c}
+.s-cb b{font-family:var(--serif);font-size:16px;line-height:1.25;text-wrap:balance}
+.s-date{font-size:11px;color:#a8a29e}
+@media (max-width:900px){ .s-body{grid-template-columns:1fr} .s-rail{display:none} .s-feat{grid-template-columns:repeat(2,minmax(0,1fr))} }
+
+/* Ledger */
+.ledger h3,.limits h3{font-family:var(--serif);font-size:22px;margin:0 0 12px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:620px;font-size:14px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--soft)}
+tr:last-child td{border-bottom:0}
+td code,li code{font-family:var(--mono);font-size:12.5px}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:28px}
+.limits ul{margin:0;padding-left:18px;display:grid;gap:7px;color:var(--muted);max-width:62ch}
+.limits li::marker{color:var(--ink)}
+.limits b{color:var(--ink)}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header class="intro">
+    <p class="eyebrow">Homepage study A3 · build check</p>
+    <h1>ASCII Hero Without Libraries</h1>
+    <p>The same hero you picked (knot, long ramp, ink), rebuilt with the browser's own WebGL and no three.js. Everything below the headline is drawn by code on this page. Compare it with the <a href="https://claude.ai/artifact/CBbRgNyrrxcAefaS1ry3DB" target="_blank" rel="noopener">three.js version</a>.</p>
+    <div class="badges"><span class="badge">libraries: <b>0</b></span><span class="badge">engine source: <b id="srcSize">…</b></span><span class="badge">vertices: <b id="vtx">…</b></span></div>
+  </header>
+
+  <div class="site">
+    <div class="s-top"><div class="s-logo"><b>N</b><span>nacfson<small>engineering blog</small></span></div><nav class="s-nav"><span>Articles</span><span>GitHub ↗</span></nav></div>
+    <div class="s-sub"><span>Make Better World</span><em>Articles</em></div>
+    <section class="hero" id="hero">
+      <div class="copy">
+        <p class="cap">Rendered in text, live</p>
+        <h2>Make Better World</h2>
+        <p class="lede">Notes from building cloud-native platforms, zero-trust security, AI agents, and the open-source communities behind them.</p>
+        <a class="cta" href="#articles">Browse articles ↓</a>
+      </div>
+      <button type="button" class="replay" id="replay">Replay intro</button>
+      <span class="hud" id="hud" aria-hidden="true"></span>
+      <span class="nogl-note">WebGL is off, so the plain headline shows.</span>
+    </section>
+    <div class="s-body" id="articles">
+      <aside class="s-rail"><p class="s-label">Topics</p><ul>
+        <li class="on"><span>All articles</span><i>6</i></li><li><span>Cloud-Native &amp; Kubernetes</span><i>2</i></li><li><span>Zero-Trust Security</span><i>2</i></li><li><span>AI &amp; LLM Agents</span><i>1</i></li><li><span>Open Source &amp; Community</span><i>1</i></li>
+      </ul></aside>
+      <div><p class="s-label">Featured</p><div class="s-feat">
+        <div class="s-card"><div class="s-plate"></div><div class="s-cb"><span class="s-topic">Cloud-Native</span><b>Hot-reloading blog content from a Flux tarball</b><span class="s-date">Nov 2, 2026</span></div></div>
+        <div class="s-card"><div class="s-plate"></div><div class="s-cb"><span class="s-topic">Zero-Trust</span><b>Zero-trust ingress for a home K3s cluster</b><span class="s-date">Oct 27, 2026</span></div></div>
+        <div class="s-card"><div class="s-plate"></div><div class="s-cb"><span class="s-topic">AI Agents</span><b>Letting coding agents open pull requests safely</b><span class="s-date">Oct 19, 2026</span></div></div>
+        <div class="s-card"><div class="s-plate"></div><div class="s-cb"><span class="s-topic">Cloud-Native</span><b>Atomic a/b workspace swaps without restarting pods</b><span class="s-date">Oct 11, 2026</span></div></div>
+      </div></div>
+    </div>
+  </div>
+
+  <section class="ledger">
+    <h3>What three.js was doing, and what replaced it</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Job</th><th>three.js version</th><th>This page</th></tr></thead>
+      <tbody>
+        <tr><td>The knot shape</td><td><code>TorusKnotGeometry</code></td><td>A short function using the same formula, producing every vertex and normal</td></tr>
+        <tr><td>Camera and turning the object</td><td><code>PerspectiveCamera</code>, nested <code>Group</code>s</td><td>Five small 4×4 matrix helpers</td></tr>
+        <tr><td>Lighting</td><td><code>MeshStandardMaterial</code> + three lights</td><td>A few lines of shader: diffuse plus specular from three lights</td></tr>
+        <tr><td>Off-screen passes for light and edges</td><td>Two <code>WebGLRenderTarget</code>s</td><td>Two framebuffers, each a texture plus a depth buffer</td></tr>
+        <tr><td>Glyph shader</td><td><code>ShaderMaterial</code></td><td>The same GLSL, compiled directly</td></tr>
+        <tr><td>Glyph atlas</td><td><code>CanvasTexture</code></td><td>One texture upload from a 2D canvas</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="cols">
+    <div class="ledger">
+      <h3>Download size</h3>
+      <div class="tbl"><table style="min-width:0">
+        <thead><tr><th>Version</th><th>Library</th><th>Hero code</th></tr></thead>
+        <tbody>
+          <tr><td>three.js</td><td class="num">≈150 KB gz</td><td class="num">≈6 KB</td></tr>
+          <tr><td>Plain WebGL</td><td class="num">0 KB</td><td class="num" id="srcSize2">…</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="limits">
+      <h3>What gets harder without three.js</h3>
+      <ul>
+        <li><b>New shapes</b> need their own geometry code. A knot, sphere, box or extruded letter is a short function; a detailed model file is not practical.</li>
+        <li><b>We own the plumbing</b>: shader compile errors, losing the WebGL context, resizing. This page handles all three.</li>
+        <li><b>No helpers</b> for clicking on objects in 3D. The hero does not need it.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script id="engine">
+(function(){
+'use strict';
+const hero=document.getElementById('hero'), hud=document.getElementById('hud');
+const REDUCE=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const src=document.getElementById('engine').textContent.length;
+document.getElementById('srcSize').textContent=(src/1024).toFixed(1)+' KB';
+document.getElementById('srcSize2').textContent=(src/1024).toFixed(1)+' KB unminified';
+
+const canvas=document.createElement('canvas'); canvas.setAttribute('aria-hidden','true');
+const gl=canvas.getContext('webgl',{alpha:true,premultipliedAlpha:true,antialias:false,depth:false});
+function fail(){ hero.classList.add('nogl'); if(canvas.parentNode) canvas.remove(); }
+if(!gl){ fail(); return; }
+hero.insertBefore(canvas,hero.firstChild);
+
+/* ---------- Settings fixed to the chosen look ---------- */
+const RAMP=" .'`^\",:;Il!i><~+_-?][}{1)(|tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$";
+const EDGE='|/-\\';
+const INK_DARK=[250/255,250/255,249/255], INK_LIGHT=[87/255,83/255,78/255], DUST=[41/255,37/255,36/255];
+const CELL=13, DIST=7, FOV=32*Math.PI/180, NEAR=.1, FAR=50;
+
+/* ---------- Small matrix kit (column-major) ---------- */
+const M={
+  id(){ const m=new Float32Array(16); m[0]=m[5]=m[10]=m[15]=1; return m; },
+  mul(a,b){ const o=new Float32Array(16); for(let c=0;c<4;c++) for(let r=0;r<4;r++){ let s=0; for(let k=0;k<4;k++) s+=a[k*4+r]*b[c*4+k]; o[c*4+r]=s; } return o; },
+  rx(t){ const m=M.id(), c=Math.cos(t), s=Math.sin(t); m[5]=c; m[6]=s; m[9]=-s; m[10]=c; return m; },
+  ry(t){ const m=M.id(), c=Math.cos(t), s=Math.sin(t); m[0]=c; m[2]=-s; m[8]=s; m[10]=c; return m; },
+  tr(x,y,z){ const m=M.id(); m[12]=x; m[13]=y; m[14]=z; return m; },
+  sc(s){ const m=M.id(); m[0]=m[5]=m[10]=s; return m; },
+  persp(f,a,n,far){ const t=1/Math.tan(f/2), m=new Float32Array(16); m[0]=t/a; m[5]=t; m[10]=(far+n)/(n-far); m[11]=-1; m[14]=2*far*n/(n-far); return m; },
+  nrm(m){ return new Float32Array([m[0],m[1],m[2],m[4],m[5],m[6],m[8],m[9],m[10]]); }
+};
+
+/* ---------- Torus knot geometry (p=2, q=3), same formula three.js uses ---------- */
+function torusKnot(R,tube,TS,RS,p,q){
+  const pos=[], nrm=[], idx=[];
+  const at=(u)=>{ const cu=Math.cos(u), su=Math.sin(u), qu=q/p*u, cs=Math.cos(qu); return [R*(2+cs)*.5*cu, R*(2+cs)*su*.5, R*Math.sin(qu)*.5]; };
+  const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]], add=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]];
+  const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+  const norm=(a)=>{ const l=Math.hypot(a[0],a[1],a[2])||1; return [a[0]/l,a[1]/l,a[2]/l]; };
+  for(let i=0;i<=TS;i++){
+    const u=i/TS*p*Math.PI*2, P1=at(u), P2=at(u+.01);
+    const T=sub(P2,P1); let N=add(P2,P1); const B=norm(cross(T,N)); N=norm(cross(B,T));
+    for(let j=0;j<=RS;j++){
+      const v=j/RS*Math.PI*2, cx=-tube*Math.cos(v), cy=tube*Math.sin(v);
+      const x=P1[0]+cx*N[0]+cy*B[0], y=P1[1]+cx*N[1]+cy*B[1], z=P1[2]+cx*N[2]+cy*B[2];
+      pos.push(x,y,z); const n=norm([x-P1[0],y-P1[1],z-P1[2]]); nrm.push(n[0],n[1],n[2]);
+    }
+  }
+  for(let j=1;j<=TS;j++) for(let i=1;i<=RS;i++){
+    const a=(RS+1)*(j-1)+(i-1), b=(RS+1)*j+(i-1), c=(RS+1)*j+i, d=(RS+1)*(j-1)+i;
+    idx.push(a,b,d,b,c,d);
+  }
+  return {pos:new Float32Array(pos),nrm:new Float32Array(nrm),idx:new Uint16Array(idx)};
+}
+
+/* ---------- Shaders ---------- */
+const SCENE_VS=`attribute vec3 aPos; attribute vec3 aNrm;
+uniform mat4 uProj; uniform mat4 uMV; uniform mat3 uNM;
+varying vec3 vN; varying vec3 vP;
+void main(){ vec4 mv=uMV*vec4(aPos,1.0); vP=mv.xyz; vN=uNM*aNrm; gl_Position=uProj*mv; }`;
+const SCENE_FS=`precision highp float;
+uniform float uMode; uniform float uNear; uniform float uFar;
+varying vec3 vN; varying vec3 vP;
+float lt(vec3 n,vec3 v,vec3 l,float k){ vec3 h=normalize(l+v); return k*(max(dot(n,l),0.0)+0.45*pow(max(dot(n,h),0.0),40.0)); }
+void main(){
+  vec3 n=normalize(vN);
+  if(uMode>0.5){ gl_FragColor=vec4(n*0.5+0.5,clamp((-vP.z-uNear)/(uFar-uNear),0.0,1.0)); return; }
+  vec3 v=normalize(-vP);
+  float c=0.04+lt(n,v,normalize(vec3(3.0,4.0,5.0)),0.85)+lt(n,v,normalize(vec3(-5.0,2.0,-3.0)),0.7)+lt(n,v,normalize(vec3(-2.0,-3.0,4.0)),0.12);
+  gl_FragColor=vec4(vec3(c),1.0);
+}`;
+const QUAD_VS=`attribute vec2 aPos; varying vec2 vUv; void main(){ vUv=aPos*0.5+0.5; gl_Position=vec4(aPos,0.0,1.0); }`;
+const ASCII_FS=`precision highp float;
+uniform sampler2D uLum; uniform sampler2D uNrm; uniform sampler2D uAtlas;
+uniform vec2 uRes; uniform vec2 uCell;
+uniform float uRampN; uniform float uGlyphN;
+uniform float uTime; uniform float uIntro; uniform float uSweep;
+uniform vec2 uPointer; uniform float uLens;
+uniform vec3 uInkDark; uniform vec3 uInkLight; uniform vec3 uDust;
+varying vec2 vUv;
+#define PI 3.14159265
+float hash(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
+void main(){
+  vec2 frag=vUv*uRes;
+  vec2 coarse=floor(frag/uCell);
+  vec2 cc=(coarse+0.5)*uCell;
+  float lens=(uLens>0.0 && length(cc-uPointer)<uLens)?1.0:0.0;
+  vec2 cs=mix(uCell,uCell*0.5,lens);
+  vec2 cell=floor(frag/cs);
+  vec2 center=(cell+0.5)*cs;
+  vec2 suv=center/uRes;
+  vec4 L=texture2D(uLum,suv);
+  float cov=L.a;
+  float lum=pow(clamp(L.r,0.0,1.0),1.15);
+  float sp=center.x/uRes.x*0.85+center.y/uRes.y*0.15;
+  float sweep=uSweep>-0.5?smoothstep(0.07,0.0,abs(sp-uSweep)):0.0;
+  lum=clamp(lum+sweep*0.3*cov,0.0,1.0);
+  vec2 px=cs/uRes;
+  vec4 nR=texture2D(uNrm,suv+vec2(px.x,0.0));
+  vec4 nL=texture2D(uNrm,suv-vec2(px.x,0.0));
+  vec4 nU=texture2D(uNrm,suv+vec2(0.0,px.y));
+  vec4 nD=texture2D(uNrm,suv-vec2(0.0,px.y));
+  vec2 dg=vec2(nR.a-nL.a,nU.a-nD.a);
+  vec2 ng=vec2(dot(nR.rgb-nL.rgb,vec3(1.0)),dot(nU.rgb-nD.rgb,vec3(1.0)));
+  float nEdge=length(nR.rgb-nL.rgb)+length(nU.rgb-nD.rgb);
+  float dEdge=abs(dg.x)+abs(dg.y);
+  float gi;
+  vec3 ink=mix(uInkLight,uInkDark,smoothstep(0.05,0.9,lum));
+  if(cov>0.5 && (dEdge>0.09 || nEdge>1.35)){
+    vec2 dir=length(dg)>0.02?dg:ng;
+    float a=mod(atan(dir.y,dir.x)+PI,PI);
+    float k=(a<PI/8.0 || a>=7.0*PI/8.0)?0.0:(a<3.0*PI/8.0?3.0:(a<5.0*PI/8.0?2.0:1.0));
+    gi=uRampN+k; ink=uInkDark;
+  } else {
+    gi=floor(clamp(lum*cov,0.0,0.999)*uRampN);
+    if(cov>0.5) gi=max(gi,1.0);
+  }
+  float th=hash(cell*0.73+3.1)*0.65+(center.x/uRes.x)*0.35;
+  if(uIntro<th){
+    float r=hash(cell+floor(uTime*22.0));
+    if(cov>0.02){ gi=1.0+floor(r*(uRampN-1.0)); ink=mix(uInkLight,uInkDark,0.35); }
+    else if(r>0.985){ gi=1.0+floor(hash(cell+7.0)*(uRampN-1.0)); ink=uInkLight; }
+  }
+  if(gi<0.5 && cov<0.02){
+    float tw=hash(cell*1.7+floor(uTime*0.6+hash(cell)*10.0));
+    if(tw>0.994){ gi=1.0; ink=uDust; }
+  }
+  if(gi<0.5){ gl_FragColor=vec4(0.0); return; }
+  vec2 inCell=clamp((frag-cell*cs)/cs,0.02,0.98);
+  float g=texture2D(uAtlas,vec2((gi+inCell.x)/uGlyphN,inCell.y)).a;
+  gl_FragColor=vec4(ink*g,g);
+}`;
+
+function compile(type,code){ const s=gl.createShader(type); gl.shaderSource(s,code); gl.compileShader(s);
+  if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; }
+function program(vs,fs){ const p=gl.createProgram(); gl.attachShader(p,compile(gl.VERTEX_SHADER,vs)); gl.attachShader(p,compile(gl.FRAGMENT_SHADER,fs)); gl.linkProgram(p);
+  if(!gl.getProgramParameter(p,gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+  const u={}, n=gl.getProgramParameter(p,gl.ACTIVE_UNIFORMS);
+  for(let i=0;i<n;i++){ const info=gl.getActiveUniform(p,i); u[info.name]=gl.getUniformLocation(p,info.name); }
+  return {p,u}; }
+function texture(){ const t=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,t);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE); return t; }
+function target(){ return {tex:texture(),rb:gl.createRenderbuffer(),fb:gl.createFramebuffer(),w:0,h:0}; }
+function sizeTarget(F,w,h){ F.w=w; F.h=h;
+  gl.bindTexture(gl.TEXTURE_2D,F.tex); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
+  gl.bindRenderbuffer(gl.RENDERBUFFER,F.rb); gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT16,w,h);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,F.fb);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,F.tex,0);
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,F.rb);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null); }
+
+let SP,AP,knot,buf,lumT,ndT,atlasTex,quadBuf,aPos,aNrm,qPos;
+const atlasCanvas=document.createElement('canvas');
+function setup(){
+  SP=program(SCENE_VS,SCENE_FS); AP=program(QUAD_VS,ASCII_FS);
+  aPos=gl.getAttribLocation(SP.p,'aPos'); aNrm=gl.getAttribLocation(SP.p,'aNrm'); qPos=gl.getAttribLocation(AP.p,'aPos');
+  knot=torusKnot(1.1,.34,300,40,2,3);
+  document.getElementById('vtx').textContent=(knot.pos.length/3).toLocaleString('en-US');
+  buf={pos:gl.createBuffer(),nrm:gl.createBuffer(),idx:gl.createBuffer()};
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf.pos); gl.bufferData(gl.ARRAY_BUFFER,knot.pos,gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf.nrm); gl.bufferData(gl.ARRAY_BUFFER,knot.nrm,gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,buf.idx); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,knot.idx,gl.STATIC_DRAW);
+  quadBuf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,quadBuf); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+  lumT=target(); ndT=target(); atlasTex=texture();
+}
+
+/* ---------- Sizing ---------- */
+let W=1,H=1,dpr=1,cssW=1,cssH=1,cw=8,ch=14,cols=1,rows=1,fit=1,hx=0,hy=0,proj=M.id();
+function buildAtlas(){
+  const glyphs=Array.from(RAMP+EDGE);
+  cw=Math.max(4,Math.round(CELL*.6*dpr)); ch=Math.max(6,Math.round(CELL*1.12*dpr));
+  atlasCanvas.width=cw*glyphs.length; atlasCanvas.height=ch;
+  const c=atlasCanvas.getContext('2d');
+  c.clearRect(0,0,atlasCanvas.width,ch); c.fillStyle='#fff'; c.textAlign='center'; c.textBaseline='middle';
+  c.font=`500 ${CELL*dpr}px "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace`;
+  glyphs.forEach((g,i)=>c.fillText(g,i*cw+cw/2,ch/2+ch*.04));
+  gl.bindTexture(gl.TEXTURE_2D,atlasTex); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,atlasCanvas); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+  cols=Math.ceil(W/cw); rows=Math.ceil(H/ch);
+  sizeTarget(lumT,cols*2,rows*2); sizeTarget(ndT,cols*2,rows*2);
+}
+function resize(){
+  cssW=hero.clientWidth; cssH=hero.clientHeight; dpr=Math.min(1.5,window.devicePixelRatio||1);
+  W=canvas.width=Math.max(1,Math.round(cssW*dpr)); H=canvas.height=Math.max(1,Math.round(cssH*dpr));
+  const aspect=cssW/cssH; proj=M.persp(FOV,aspect,NEAR,FAR);
+  const vh=2*Math.tan(FOV/2)*DIST, vw=vh*aspect, wide=cssW>=760;
+  fit=(wide?Math.min(vh*.37,vw*.22):Math.min(vh*.27,vw*.40))/2.0;
+  hx=wide?vw*.2:0; hy=wide?-vh*.02:-vh*.2;
+  buildAtlas(); dirty=true;
+}
+
+/* ---------- Interaction ---------- */
+let yaw=0,yawT=0,tiltX=0,tiltY=0,px=0,py=0,inside=false,drag=false,lastX=0,dirty=true,ptr=[-1e5,-1e5];
+function pt(e){ const r=canvas.getBoundingClientRect(); px=(e.clientX-r.left)/r.width*2-1; py=-((e.clientY-r.top)/r.height*2-1); ptr=[(e.clientX-r.left)*dpr,(r.bottom-e.clientY)*dpr]; }
+hero.addEventListener('pointermove',e=>{ pt(e); inside=true; if(drag){ yawT+=(e.clientX-lastX)/hero.clientWidth*4; lastX=e.clientX; } dirty=true; });
+hero.addEventListener('pointerdown',e=>{ if(e.target.closest('a,button')) return; drag=true; lastX=e.clientX; pt(e); inside=true; });
+window.addEventListener('pointerup',()=>{ drag=false; });
+hero.addEventListener('pointerleave',()=>{ inside=false; ptr=[-1e5,-1e5]; dirty=true; });
+let introStart=performance.now();
+document.getElementById('replay').addEventListener('click',()=>{ introStart=performance.now(); dirty=true; });
+
+/* ---------- Frame ---------- */
+function drawKnot(F,mode,clear,mv,nm){
+  gl.bindFramebuffer(gl.FRAMEBUFFER,F.fb); gl.viewport(0,0,F.w,F.h);
+  gl.clearColor(clear[0],clear[1],clear[2],clear[3]); gl.clearDepth(1); gl.enable(gl.DEPTH_TEST);
+  gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  gl.useProgram(SP.p);
+  gl.uniformMatrix4fv(SP.u.uProj,false,proj); gl.uniformMatrix4fv(SP.u.uMV,false,mv); gl.uniformMatrix3fv(SP.u.uNM,false,nm);
+  gl.uniform1f(SP.u.uMode,mode); gl.uniform1f(SP.u.uNear,DIST-3); gl.uniform1f(SP.u.uFar,DIST+3);
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf.pos); gl.enableVertexAttribArray(aPos); gl.vertexAttribPointer(aPos,3,gl.FLOAT,false,0,0);
+  gl.bindBuffer(gl.ARRAY_BUFFER,buf.nrm); gl.enableVertexAttribArray(aNrm); gl.vertexAttribPointer(aNrm,3,gl.FLOAT,false,0,0);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,buf.idx); gl.drawElements(gl.TRIANGLES,knot.idx.length,gl.UNSIGNED_SHORT,0);
+  gl.disableVertexAttribArray(aPos); gl.disableVertexAttribArray(aNrm);
+}
+let last=performance.now(), T=0, fps=60, fpsT=0;
+function render(now){
+  const dt=Math.min(.05,(now-last)/1000); last=now;
+  if(!REDUCE) T+=dt;
+  const t=REDUCE?3.2:T, k=REDUCE?1:1-Math.exp(-6*dt);
+  yaw+=(yawT-yaw)*k; tiltX+=((inside?-py*.22:0)-tiltX)*k; tiltY+=((inside?px*.3:0)-tiltY)*k;
+  const model=M.mul(M.mul(M.mul(M.tr(hx,hy,0),M.sc(fit)),M.mul(M.rx(tiltX),M.ry(yaw+tiltY))),M.mul(M.rx(t*.21),M.ry(t*.33)));
+  const mv=M.mul(M.tr(0,0,-DIST),model), nm=M.nrm(model);
+  drawKnot(lumT,0,[0,0,0,0],mv,nm);
+  drawKnot(ndT,1,[.5,.5,1,1],mv,nm);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null); gl.viewport(0,0,W,H); gl.disable(gl.DEPTH_TEST);
+  gl.clearColor(0,0,0,0); gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.useProgram(AP.p);
+  gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,lumT.tex); gl.uniform1i(AP.u.uLum,0);
+  gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D,ndT.tex); gl.uniform1i(AP.u.uNrm,1);
+  gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D,atlasTex); gl.uniform1i(AP.u.uAtlas,2);
+  gl.uniform2f(AP.u.uRes,W,H); gl.uniform2f(AP.u.uCell,cw,ch);
+  gl.uniform1f(AP.u.uRampN,Array.from(RAMP).length); gl.uniform1f(AP.u.uGlyphN,Array.from(RAMP+EDGE).length);
+  gl.uniform1f(AP.u.uTime,t); gl.uniform1f(AP.u.uIntro,REDUCE?1:Math.min(1,(now-introStart)/1400));
+  gl.uniform1f(AP.u.uSweep,REDUCE?-1:((t/7)%1)*1.6-.3);
+  gl.uniform2f(AP.u.uPointer,ptr[0],ptr[1]); gl.uniform1f(AP.u.uLens,inside?95*dpr:0);
+  gl.uniform3fv(AP.u.uInkDark,INK_DARK); gl.uniform3fv(AP.u.uInkLight,INK_LIGHT); gl.uniform3fv(AP.u.uDust,DUST);
+  gl.bindBuffer(gl.ARRAY_BUFFER,quadBuf); gl.enableVertexAttribArray(qPos); gl.vertexAttribPointer(qPos,2,gl.FLOAT,false,0,0);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4); gl.disableVertexAttribArray(qPos);
+  if(dt>0) fps+=(1/dt-fps)*.05;
+  fpsT+=dt; if(fpsT>.5||REDUCE){ fpsT=0; hud.textContent=`plain WebGL · ${cols} × ${rows} cells · `+(REDUCE?'still frame':`${Math.round(fps)} fps`); }
+}
+
+let visible=true, lost=false;
+function loop(now){
+  requestAnimationFrame(loop);
+  if(lost||document.hidden||!visible||(REDUCE&&!dirty)){ last=now; return; }
+  render(now); dirty=false;
+}
+canvas.addEventListener('webglcontextlost',e=>{ e.preventDefault(); lost=true; });
+canvas.addEventListener('webglcontextrestored',()=>{ try{ setup(); resize(); lost=false; }catch(err){ fail(); } });
+
+try{ setup(); }catch(err){ console.error(err); fail(); return; }
+new IntersectionObserver(es=>{ visible=es[0].isIntersecting; if(visible) dirty=true; }).observe(hero);
+new ResizeObserver(()=>resize()).observe(hero);
+resize();
+const start=()=>{ buildAtlas(); introStart=performance.now(); dirty=true; };
+if(document.fonts&&document.fonts.load) document.fonts.load('500 16px "JetBrains Mono"').then(start,start);
+requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
