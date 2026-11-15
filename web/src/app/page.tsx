@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { PostSummary, Topic } from '../lib/types';
 import { TOPICS, isTopic, topicLabel } from '../lib/topics';
+import AsciiHero from '../components/AsciiHero';
 
 const PAGE_SIZE = 9;
 const FEATURED_COUNT = 4;
@@ -76,7 +77,12 @@ export default function HomePage() {
   const featured = posts.slice(0, FEATURED_COUNT);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 grid grid-cols-1 lg:grid-cols-[240px_minmax(0,1fr)] gap-10 lg:gap-12">
+    <>
+    <AsciiHero />
+    <div
+      id="articles"
+      className="mx-auto max-w-7xl scroll-mt-16 px-4 sm:px-6 lg:px-8 py-10 grid grid-cols-1 lg:grid-cols-[240px_minmax(0,1fr)] gap-10 lg:gap-12"
+    >
       {/* Left rail */}
       <aside className="order-2 lg:order-1 lg:sticky lg:top-28 self-start space-y-7">
         <nav aria-label="Topics">
@@ -125,16 +131,8 @@ export default function HomePage() {
 
       {/* Main column */}
       <div className="order-1 lg:order-2 min-w-0">
-        <section>
-          <h1 className="font-serif text-4xl sm:text-5xl font-bold tracking-tight text-stone-950">Make Better World</h1>
-          <p className="mt-3 max-w-2xl text-base leading-relaxed text-stone-600">
-            I believe good engineering can make the world a little better every day. Here I share what I learn while
-            building cloud-native platforms, zero-trust security, AI agents, and the open-source communities behind them.
-          </p>
-        </section>
-
         {loadingPosts ? (
-          <div className="mt-10 space-y-6" aria-busy="true">
+          <div className="space-y-6" aria-busy="true">
             <div className="h-64 rounded border border-stone-200 bg-white animate-pulse" />
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
               {[1, 2, 3].map((i) => (
@@ -190,6 +188,7 @@ export default function HomePage() {
         )}
       </div>
     </div>
+    </>
   );
 }
 
@@ -228,7 +227,7 @@ function FeaturedShelf({ posts }: { posts: PostSummary[] }) {
   const current = posts[Math.min(open, posts.length - 1)];
 
   return (
-    <section aria-label="Featured articles" className="mt-10">
+    <section aria-label="Featured articles">
       <div className="flex h-auto gap-2.5 md:h-72">
         <Link
           href={`/post?slug=${current.slug}`}
@@ -276,7 +275,7 @@ function FeaturedShelf({ posts }: { posts: PostSummary[] }) {
 
 function EmptyNotice() {
   return (
-    <div role="status" aria-live="polite" className="mt-10 overflow-hidden rounded border border-stone-200 bg-white">
+    <div role="status" aria-live="polite" className="overflow-hidden rounded border border-stone-200 bg-white">
       <div className="flex items-center gap-2 border-b border-stone-200 bg-stone-100 px-5 py-2.5 text-[11px] text-stone-500">
         <span className="relative flex h-2 w-2" aria-hidden="true">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-stone-950 opacity-40" />
