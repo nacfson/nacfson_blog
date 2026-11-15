@@ -24,8 +24,8 @@
 ## Placement (`web/src/app/page.tsx`)
 
 - **New band.** It sits between the sub-navigation and the existing rail and grid, which stay unchanged.
-  - Band height: `clamp(420px, 60vh, 600px)`, or `600px` below 760 px wide.
-  - Copy at top-left; knot on the right. On narrow screens the knot is centred in the lower half.
+  - At 760 px and wider: band height `clamp(420px, 60vh, 600px)`, copy at top-left laid over the canvas, knot on the right.
+  - Below 760 px: the copy comes first, then a 320 px knot strip under it, so long copy never overlaps the knot. The strip stays hidden without WebGL.
 - **The band's `<h1>` stays the only `h1`**, with text exactly `Make Better World`. `page.test.tsx` and `playwright_probe.mjs` both check it.
   - Remove the old `h1` and intro paragraph from the main column.
   - Move the intro paragraph into the band as the lede.

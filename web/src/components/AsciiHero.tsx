@@ -20,10 +20,11 @@ function whenIdle(cb: () => void): IdleHandle {
 }
 
 /**
- * Starts the live knot inside `section`. Returns a teardown function.
- * If WebGL is unavailable the section keeps its static copy and nothing else happens.
+ * Starts the live knot inside `stage`, taking pointer input from the whole `section`.
+ * Returns a teardown function. If WebGL is unavailable, the stage is hidden and
+ * the section keeps only its static copy.
  */
-function start(section: HTMLElement): () => void {
+function start(section: HTMLElement, stage: HTMLElement): () => void {
   const canvas = document.createElement('canvas');
   canvas.setAttribute('aria-hidden', 'true');
   canvas.className = 'absolute inset-0 h-full w-full';
@@ -31,7 +32,8 @@ function start(section: HTMLElement): () => void {
   let stopped = false;
   const renderer = createAsciiRenderer(canvas, () => stop());
   if (!renderer) return () => {};
-  section.insertBefore(canvas, section.firstChild);
+  stage.hidden = false;
+  stage.appendChild(canvas);
 
   const reduce = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const m = ASCII.motion;
@@ -51,7 +53,7 @@ function start(section: HTMLElement): () => void {
   let lastX = 0;
 
   const resize = () => {
-    renderer.resize(section.clientWidth, section.clientHeight, window.devicePixelRatio || 1);
+    renderer.resize(stage.clientWidth, stage.clientHeight, window.devicePixelRatio || 1);
     dirty = true;
   };
 
@@ -67,7 +69,7 @@ function start(section: HTMLElement): () => void {
     if (e.pointerType === 'touch' && !dragging) return;
     locate(e);
     if (dragging) {
-      yawT += ((e.clientX - lastX) / Math.max(section.clientWidth, 1)) * m.dragRadPerWidth;
+      yawT += ((e.clientX - lastX) / Math.max(stage.clientWidth, 1)) * m.dragRadPerWidth;
       lastX = e.clientX;
     }
     dirty = true;
@@ -103,7 +105,7 @@ function start(section: HTMLElement): () => void {
       : null;
   io?.observe(section);
   const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(resize) : null;
-  ro?.observe(section);
+  ro?.observe(stage);
   if (!ro) window.addEventListener('resize', resize);
   resize();
 
@@ -149,6 +151,7 @@ function start(section: HTMLElement): () => void {
     window.removeEventListener('pointercancel', onUp);
     renderer?.dispose();
     canvas.remove();
+    stage.hidden = true;
   }
   return stop;
 }
@@ -156,14 +159,16 @@ function start(section: HTMLElement): () => void {
 /** Homepage hero: the headline on an ink band, with a live knot drawn in glyphs behind it. */
 export default function AsciiHero() {
   const ref = useRef<HTMLElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const section = ref.current;
-    if (!section) return;
+    const stage = stageRef.current;
+    if (!section || !stage) return;
     let cancelled = false;
     let stop: (() => void) | null = null;
     const idle = whenIdle(() => {
-      if (!cancelled) stop = start(section);
+      if (!cancelled) stop = start(section, stage);
     });
     return () => {
       cancelled = true;
@@ -176,10 +181,11 @@ export default function AsciiHero() {
     <section
       ref={ref}
       aria-labelledby="hero-title"
-      className="relative h-[600px] overflow-hidden border-b border-stone-200 bg-stone-950 min-[760px]:h-[clamp(420px,60vh,600px)]"
+      className="relative overflow-hidden border-b border-stone-200 bg-stone-950 min-[760px]:h-[clamp(420px,60vh,600px)]"
       style={{ touchAction: 'pan-y' }}
     >
-      <div className="pointer-events-none relative z-10 mx-auto max-w-7xl px-4 pt-10 sm:px-6 min-[760px]:pt-16 lg:px-8">
+      {/* Narrow: the copy sits above the knot. Wide: the copy is laid over the full-band knot. */}
+      <div className="pointer-events-none relative z-10 mx-auto max-w-7xl px-4 pb-8 pt-10 sm:px-6 min-[760px]:pb-0 min-[760px]:pt-16 lg:px-8">
         <div className="min-[760px]:max-w-[470px]">
           <p className="mb-3.5 font-mono text-[11px] uppercase tracking-[0.06em] text-stone-500">Rendered in text, live</p>
           <h1 id="hero-title" className="font-serif text-[40px] font-bold leading-none tracking-tight text-stone-50 sm:text-5xl lg:text-6xl">
@@ -194,6 +200,7 @@ export default function AsciiHero() {
           </a>
         </div>
       </div>
+      <div ref={stageRef} hidden className="relative h-[320px] min-[760px]:absolute min-[760px]:inset-0 min-[760px]:h-auto" />
     </section>
   );
 }

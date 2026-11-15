@@ -16,7 +16,9 @@ describe('fitKnot', () => {
 
   it.each([
     [1440, 600],
-    [390, 600],
+    [390, 320],
+    [320, 320],
+    [759, 320],
     [760, 420],
   ])('keeps the knot inside the frame at %ix%i', (w, h) => {
     const f = fitKnot(w, h);
@@ -26,10 +28,9 @@ describe('fitKnot', () => {
     expect(Math.abs(f.y) + r).toBeLessThanOrEqual(halfH);
   });
 
-  it('places the knot on the right on wide screens and centred on narrow ones', () => {
+  it('places the knot on the right on wide screens and centres it in the stacked stage on narrow ones', () => {
     expect(fitKnot(1440, 600).x).toBeGreaterThan(0);
-    expect(fitKnot(390, 600).x).toBe(0);
-    expect(fitKnot(390, 600).y).toBeLessThan(0);
+    expect(fitKnot(390, 320)).toMatchObject({ x: 0, y: 0, wide: false });
   });
 });
 

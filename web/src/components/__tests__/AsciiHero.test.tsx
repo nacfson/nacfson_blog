@@ -88,6 +88,8 @@ describe('AsciiHero', () => {
     expect(screen.getByText(/good engineering can make the world a little better/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Browse articles ↓' })).toHaveAttribute('href', '#articles');
     expect(container.querySelector('canvas')).toBeNull();
+    // The empty knot strip stays hidden, so narrow screens get no blank 320px gap.
+    expect(container.querySelector('section > div[hidden]')).not.toBeNull();
     expect(errors).not.toHaveBeenCalled();
   });
 
