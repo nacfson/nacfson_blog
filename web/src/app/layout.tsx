@@ -4,6 +4,7 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Make Better World | nacfson',
+  icons: { icon: '/tux-icon.png' },
   description: 'nacfson\'s engineering blog on cloud-native platforms, zero-trust security, AI agents, and open source.',
 };
 
@@ -19,9 +20,8 @@ export default function RootLayout({
         <header className="sticky top-0 z-40 border-b border-stone-200 bg-white/90 backdrop-blur-md">
           <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
             <Link href="/" className="flex items-center space-x-2.5 text-stone-950">
-              <div className="flex h-8 w-8 items-center justify-center rounded bg-stone-950 text-stone-50 font-serif font-bold text-sm">
-                N
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/tux-icon.png" alt="" width={32} height={32} className="h-8 w-8" />
               <div className="flex flex-col">
                 <span className="font-bold tracking-tight text-sm">nacfson</span>
                 <span className="text-[10px] text-stone-500 font-mono -mt-0.5">engineering blog</span>

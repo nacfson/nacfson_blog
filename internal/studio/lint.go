@@ -53,11 +53,6 @@ var (
 	reItalic   = regexp.MustCompile(`([*_])([^\s*_](?:[^*_\n]*[^\s*_])?)([*_])`)
 )
 
-var validTopics = map[string]bool{
-	string(content.TopicCloudNative): true, string(content.TopicZeroTrust): true,
-	string(content.TopicAIAgents): true, string(content.TopicOpenSource): true,
-}
-
 // Lint checks a full post file (spec §5).
 func Lint(data []byte, filename string, opts LintOptions) []Issue {
 	doc, err := ParseDocument(data)
@@ -85,8 +80,8 @@ func Lint(data []byte, filename string, opts LintOptions) []Issue {
 	if !dateRe.MatchString(f.Date) {
 		add(SevError, "date", 0, "date must be YYYY-MM-DD")
 	}
-	if !validTopics[f.Topic] {
-		add(SevError, "topic", 0, "topic must be one of cloud-native, zero-trust, ai-agents, open-source")
+	if strings.TrimSpace(f.Topic) == "" {
+		add(SevError, "topic", 0, "topic is required")
 	}
 	// Belt and braces: anything else the production parser rejects.
 	if len(issues) == 0 {

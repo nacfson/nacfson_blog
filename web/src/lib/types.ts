@@ -1,4 +1,4 @@
-export type Topic = 'cloud-native' | 'zero-trust' | 'ai-agents' | 'open-source';
+export type Topic = string;
 
 export interface PostSummary {
   slug: string;
