@@ -202,7 +202,6 @@ func TestAPI_EndToEndDraftSavePublishFlow(t *testing.T) {
 			Date:    "2026-11-04",
 			Topic:   "ai-agents",
 			Summary: "Testing the studio HTTP API.",
-			Tags:    []string{"go", "studio"},
 		},
 		Body: "## Intro\n\nBody paragraph with *italics* warning.\n",
 	}

@@ -96,7 +96,6 @@ async function main() {
     await page.getByLabel('Topic').fill('ai-agents');
     await page.getByLabel('Summary').fill('End-to-end Playwright test of Blog Studio.');
     await page.getByLabel('Project').fill('nacfson_blog');
-    await page.getByLabel('Tags').fill('e2e, studio');
 
     // Verify auto-derived slug
     const slugVal = await page.getByLabel(/Slug/).inputValue();

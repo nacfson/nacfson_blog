@@ -143,17 +143,6 @@ function PostContent() {
         <p className="text-sm sm:text-base text-stone-600 leading-relaxed pt-1">
           {post.summary}
         </p>
-
-        <div className="flex flex-wrap gap-1.5 pt-2">
-          {(post.tags ?? []).map((tag) => (
-            <span
-              key={tag}
-              className="px-2 py-0.5 rounded text-[10px] font-medium bg-stone-100 text-stone-600 font-mono"
-            >
-              #{tag}
-            </span>
-          ))}
-        </div>
       </header>
 
       {/* Two Column Layout: MiniNav + Markdown Content */}

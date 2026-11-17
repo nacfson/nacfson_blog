@@ -39,7 +39,6 @@ describe('Blog Studio utilities & components', () => {
       topic: 'zero-trust',
       project: 'nacfson_pipeline',
       summary: 'Short summary',
-      tags: ['cilium', 'openbao'],
     };
     const out = serializeFrontmatterPreview(fm, '## Section\n\nHello.\n');
     expect(out).toBe(
@@ -51,7 +50,6 @@ describe('Blog Studio utilities & components', () => {
         'topic: "zero-trust"',
         'project: "nacfson_pipeline"',
         'summary: "Short summary"',
-        'tags: ["cilium", "openbao"]',
         '---',
         '',
         '## Section',
@@ -70,7 +68,6 @@ describe('Blog Studio utilities & components', () => {
       topic: '',
       project: '',
       summary: '',
-      tags: [],
     };
     const issues: Issue[] = [
       { severity: 'error', field: 'title', message: 'title is required' },
@@ -196,7 +193,6 @@ describe('Blog Studio utilities & components', () => {
       topic: 'cloud-native',
       project: 'nacfson_blog',
       summary: 'Deck summary text.',
-      tags: ['k3s'],
     };
     const md = [
       '## Architecture Overview',

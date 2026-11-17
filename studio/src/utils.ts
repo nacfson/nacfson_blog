@@ -53,7 +53,6 @@ export function serializeFrontmatterPreview(fm: Frontmatter, body: string): stri
     lines.push(`project: ${q(fm.project)}`);
   }
   lines.push(`summary: ${q(fm.summary)}`);
-  lines.push(`tags: [${fm.tags.map((t) => q(t.trim())).join(', ')}]`);
   if (fm.readTimeMinutes && fm.readTimeMinutes > 0) {
     lines.push(`readTimeMinutes: ${fm.readTimeMinutes}`);
   }

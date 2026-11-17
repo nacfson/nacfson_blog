@@ -17,7 +17,6 @@ func sampleDoc() *Document {
 			Topic:   "ai-agents",
 			Project: "nacfson_pipeline",
 			Summary: `Gateway "pattern": no keys.`,
-			Tags:    []string{"ai-agents", "open bao", `q"uote`},
 		},
 		Body: "\nLeading blank line kept.\n\n## Section\n\n```benchmarkTable\n{\"columns\":[]}\n```\n",
 	}
@@ -35,7 +34,7 @@ func TestSerialize_RoundTripsThroughProductionParser(t *testing.T) {
 	}
 	f := doc.Frontmatter
 	if post.Title != f.Title || post.Slug != f.Slug || post.Date != f.Date || string(post.Topic) != f.Topic ||
-		post.Project != f.Project || post.Summary != f.Summary || !reflect.DeepEqual(post.Tags, f.Tags) {
+		post.Project != f.Project || post.Summary != f.Summary {
 		t.Errorf("mismatch:\n got %+v\nwant %+v", post.PostSummary, f)
 	}
 	if post.MarkdownBody != doc.Body {
@@ -52,12 +51,12 @@ func TestSerialize_RoundTripsThroughProductionParser(t *testing.T) {
 }
 
 func TestSerialize_FixedOrderAndOptionalFields(t *testing.T) {
-	doc := &Document{Frontmatter: Frontmatter{Title: "T", Slug: "t", Date: "2026-11-04", Topic: "open-source", Tags: []string{}}, Body: "b\n"}
+	doc := &Document{Frontmatter: Frontmatter{Title: "T", Slug: "t", Date: "2026-11-04", Topic: "open-source"}, Body: "b\n"}
 	data, err := SerializeDocument(doc)
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := "---\ntitle: \"T\"\nslug: \"t\"\ndate: \"2026-11-04\"\ntopic: \"open-source\"\nsummary: \"\"\ntags: []\n---\n\nb\n"
+	want := "---\ntitle: \"T\"\nslug: \"t\"\ndate: \"2026-11-04\"\ntopic: \"open-source\"\nsummary: \"\"\n---\n\nb\n"
 	if string(data) != want {
 		t.Errorf("got\n%s\nwant\n%s", data, want)
 	}
@@ -67,8 +66,6 @@ func TestSerialize_Rejects(t *testing.T) {
 	cases := map[string]func(*Document){
 		"newline in title":   func(d *Document) { d.Frontmatter.Title = "a\nb" },
 		"CR in summary":      func(d *Document) { d.Frontmatter.Summary = "a\rb" },
-		"comma in tag":       func(d *Document) { d.Frontmatter.Tags = []string{"a,b"} },
-		"empty tag":          func(d *Document) { d.Frontmatter.Tags = []string{" "} },
 		"delimiter in extra": func(d *Document) { d.Frontmatter.Extra = []string{"---"} },
 	}
 	for name, mutate := range cases {
@@ -90,7 +87,7 @@ func TestParse_PreservesUnknownKeysAndReadTime(t *testing.T) {
 		t.Fatal(err)
 	}
 	f := doc.Frontmatter
-	if f.Title != "Single" || f.Slug != "s" || f.ReadTimeMinutes != 9 || !reflect.DeepEqual(f.Tags, []string{"a", "b"}) {
+	if f.Title != "Single" || f.Slug != "s" || f.ReadTimeMinutes != 9 {
 		t.Errorf("parsed %+v", f)
 	}
 	if !reflect.DeepEqual(f.Extra, []string{"draft: true", "aliases:", "  - /old"}) {

@@ -4,7 +4,7 @@ import '@testing-library/jest-dom/vitest';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import HomePage from '../page';
 
-type P = { slug: string; title: string; date: string; topic: string; summary: string; tags: string[]; readTimeMinutes: number };
+type P = { slug: string; title: string; date: string; topic: string; summary: string; readTimeMinutes: number };
 
 function post(i: number, topic = 'cloud-native'): P {
   return {
@@ -13,7 +13,6 @@ function post(i: number, topic = 'cloud-native'): P {
     date: `2026-10-${String(30 - i).padStart(2, '0')}`,
     topic,
     summary: `Summary ${i}`,
-    tags: ['tag'],
     readTimeMinutes: 3,
   };
 }

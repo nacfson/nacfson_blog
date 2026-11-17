@@ -115,8 +115,7 @@ func NewHandler(store content.ContentStore, activeContentDir func() string, webO
 	// GET /api/posts -> JSON list from store.ListPosts
 	mux.HandleFunc("GET /api/posts", func(w http.ResponseWriter, r *http.Request) {
 		topic := r.URL.Query().Get("topic")
-		tag := r.URL.Query().Get("tag")
-		posts, err := store.ListPosts(r.Context(), topic, tag)
+		posts, err := store.ListPosts(r.Context(), topic)
 		if err != nil {
 			recordServerError(w, err)
 			return

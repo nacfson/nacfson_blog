@@ -39,7 +39,6 @@ export interface Frontmatter {
   topic: Topic | '';
   project: string;
   summary: string;
-  tags: string[];
   readTimeMinutes?: number;
   extra?: string[];
 }

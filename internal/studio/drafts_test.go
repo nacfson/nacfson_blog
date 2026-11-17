@@ -16,7 +16,7 @@ import (
 // ---------- fixtures ----------
 
 func post(title, slug, date, topic string) string {
-	return fmt.Sprintf("---\ntitle: %q\nslug: %q\ndate: %q\ntopic: %q\nsummary: \"s\"\ntags: [\"t\"]\n---\nBody of %s.\n",
+	return fmt.Sprintf("---\ntitle: %q\nslug: %q\ndate: %q\ntopic: %q\nsummary: \"s\"\n---\nBody of %s.\n",
 		title, slug, date, topic, slug)
 }
 
