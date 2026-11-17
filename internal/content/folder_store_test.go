@@ -243,3 +243,25 @@ func TestFolderStore_TopicValidationAndFiltering(t *testing.T) {
 		t.Fatalf("expected only post a with topic zero-trust, got %+v (err=%v)", got, err)
 	}
 }
+
+func TestFolderStore_GetPost_NoTagsSerializesAsEmptyArray(t *testing.T) {
+	tmp := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(tmp, "posts"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	md := "---\ntitle: \"No tags\"\nslug: \"no-tags\"\ndate: \"2026-11-17\"\ntopic: \"personal\"\n---\nBody\n"
+	if err := os.WriteFile(filepath.Join(tmp, "posts", "no-tags.md"), []byte(md), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	store, err := content.NewFolderStore(func() string { return tmp })
+	if err != nil {
+		t.Fatal(err)
+	}
+	post, err := store.GetPost(context.Background(), "no-tags")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if post.Tags == nil {
+		t.Fatal("Tags is nil: the API would return \"tags\": null and the post page crashes")
+	}
+}

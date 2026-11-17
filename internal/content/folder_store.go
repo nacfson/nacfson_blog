@@ -138,9 +138,8 @@ func (s *FolderStore) GetPost(ctx context.Context, slug string) (*Post, error) {
 	}
 
 	postCopy := post
-	if post.Tags != nil {
-		postCopy.Tags = append([]string(nil), post.Tags...)
-	}
+	// Always a non-nil slice so a post without tags serializes as [] not null.
+	postCopy.Tags = append(make([]string, 0, len(post.Tags)), post.Tags...)
 	return &postCopy, nil
 }
 

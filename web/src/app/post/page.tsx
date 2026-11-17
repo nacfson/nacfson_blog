@@ -145,7 +145,7 @@ function PostContent() {
         </p>
 
         <div className="flex flex-wrap gap-1.5 pt-2">
-          {post.tags.map((tag) => (
+          {(post.tags ?? []).map((tag) => (
             <span
               key={tag}
               className="px-2 py-0.5 rounded text-[10px] font-medium bg-stone-100 text-stone-600 font-mono"
