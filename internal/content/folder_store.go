@@ -104,17 +104,14 @@ func loadPosts(root string) (map[string]Post, []PostSummary, error) {
 	return posts, summaries, nil
 }
 
-// ListPosts returns posts optionally filtered by topic and tag, sorted newest first.
-func (s *FolderStore) ListPosts(ctx context.Context, topic, tag string) ([]PostSummary, error) {
+// ListPosts returns posts optionally filtered by topic, sorted newest first.
+func (s *FolderStore) ListPosts(ctx context.Context, topic string) ([]PostSummary, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	result := make([]PostSummary, 0, len(s.summaries))
 	for _, summary := range s.summaries {
 		if topic != "" && !strings.EqualFold(string(summary.Topic), topic) {
-			continue
-		}
-		if tag != "" && !hasTag(summary.Tags, tag) {
 			continue
 		}
 		result = append(result, summary)
@@ -138,20 +135,7 @@ func (s *FolderStore) GetPost(ctx context.Context, slug string) (*Post, error) {
 	}
 
 	postCopy := post
-	if post.Tags != nil {
-		postCopy.Tags = append([]string(nil), post.Tags...)
-	}
 	return &postCopy, nil
-}
-
-// hasTag checks whether any tag matches target case-insensitively.
-func hasTag(tags []string, target string) bool {
-	for _, t := range tags {
-		if strings.EqualFold(t, target) {
-			return true
-		}
-	}
-	return false
 }
 
 // isValidSlug checks if a slug is safe (no path traversal, non-empty, alphanumeric + - and _).
@@ -214,24 +198,16 @@ func parsePost(content, filename string) (*Post, error) {
 // parseFrontmatter extracts and validates metadata fields from YAML frontmatter text.
 func parseFrontmatter(fm, filename string) (*PostSummary, error) {
 	lines := strings.Split(fm, "\n")
-	summary := &PostSummary{
-		Tags: []string{},
-	}
+	summary := &PostSummary{}
 
-	var currentKey string
 	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
 		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
 			continue
 		}
 
-		// Handle list item continuation (e.g., "  - tag")
+		// List items belong to a key this parser does not read (for example a legacy tags list).
 		if strings.HasPrefix(trimmed, "- ") {
-			item := strings.TrimSpace(strings.TrimPrefix(trimmed, "- "))
-			item = unquote(item)
-			if currentKey == "tags" && item != "" {
-				summary.Tags = append(summary.Tags, item)
-			}
 			continue
 		}
 
@@ -242,7 +218,6 @@ func parseFrontmatter(fm, filename string) (*PostSummary, error) {
 
 		key = strings.ToLower(strings.TrimSpace(key))
 		val = strings.TrimSpace(val)
-		currentKey = key
 
 		switch key {
 		case "title":
@@ -261,17 +236,6 @@ func parseFrontmatter(fm, filename string) (*PostSummary, error) {
 			v, err := strconv.Atoi(unquote(val))
 			if err == nil {
 				summary.ReadTimeMinutes = v
-			}
-		case "tags":
-			if strings.HasPrefix(val, "[") && strings.HasSuffix(val, "]") {
-				inner := val[1 : len(val)-1]
-				parts := strings.Split(inner, ",")
-				for _, p := range parts {
-					item := unquote(strings.TrimSpace(p))
-					if item != "" {
-						summary.Tags = append(summary.Tags, item)
-					}
-				}
 			}
 		}
 	}

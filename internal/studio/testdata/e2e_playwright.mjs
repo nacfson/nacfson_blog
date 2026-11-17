@@ -93,10 +93,9 @@ async function main() {
     // 2. Fill frontmatter fields
     await page.getByLabel('Title').fill('E2E Studio Post');
     await page.getByLabel('Date').fill('2026-11-04');
-    await page.getByLabel('Topic').selectOption('ai-agents');
+    await page.getByLabel('Topic').fill('ai-agents');
     await page.getByLabel('Summary').fill('End-to-end Playwright test of Blog Studio.');
     await page.getByLabel('Project').fill('nacfson_blog');
-    await page.getByLabel('Tags').fill('e2e, studio');
 
     // Verify auto-derived slug
     const slugVal = await page.getByLabel(/Slug/).inputValue();

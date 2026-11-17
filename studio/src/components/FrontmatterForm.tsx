@@ -21,8 +21,6 @@ export const FrontmatterForm: React.FC<FrontmatterFormProps> = ({
   const hasError = (field: string) =>
     issues.some((i) => i.severity === 'error' && i.field === field);
 
-  const tagsStr = frontmatter.tags.join(', ');
-
   return (
     <section className="fm" aria-label="Frontmatter">
       <label className="wide2">
@@ -106,27 +104,6 @@ export const FrontmatterForm: React.FC<FrontmatterFormProps> = ({
           placeholder="optional"
           value={frontmatter.project}
           onChange={(e) => onChange({ ...frontmatter, project: e.target.value }, false)}
-        />
-      </label>
-
-      <label>
-        Tags
-        <input
-          id="f-tags"
-          aria-label="Tags"
-          className={hasError('tags') ? 'bad' : ''}
-          autoComplete="off"
-          disabled={disabled}
-          placeholder="comma, separated"
-          value={tagsStr}
-          onChange={(e) => {
-            const raw = e.target.value;
-            const tags = raw
-              .split(',')
-              .map((t) => t.trim())
-              .filter(Boolean);
-            onChange({ ...frontmatter, tags }, false);
-          }}
         />
       </label>
     </section>

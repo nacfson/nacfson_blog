@@ -1,11 +1,41 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ASCII } from '../lib/ascii/constants';
 import { createAsciiRenderer } from '../lib/ascii/renderer';
 
 const LEDE =
   'I believe good engineering can make the world a little better every day. Here I share what I learn while building cloud-native platforms, zero-trust security, AI agents, and the open-source communities behind them.';
+
+/** Still frame of the knot, shown to visitors whose browser cannot run WebGL. */
+const FALLBACK_ART = `                                    ######*
+                                  *###%%%%#*+
+                                 *###%%%%#*++
+                                *###%%%%#*+=-
+                               *###%%%%#*+:.:
+                              ****#%%%#*+..::
+                             +***#%%%##+..:-=
+                    #########+*+*#%%##*:--===       ####*
+                ########%###=++*#####*:#########%%%%%%%%%%##*
+              ##**######***+=++**###*=*#########%#%%%######**+
+            *****#####**+++===+**###+**+*********########***++
+           ++++*****++=-:::===+*****========++==++====-----:--
+          ++++*****+=-.   =--=+****+.........................
+         ===+*****+=.     -:--=+**+=---+*##%%%*=--:.........
+        +===++***+=       -::==++++==:--=+*%%%#::.........
+        =--=++**++    *###:.:--=++=##-::=+*##%%#:.......
+        -:-==+**+=  +==++*:..:-====%%#::-=+*##%#.....
+        -::=++***=  =====+:..::--==##*#--=+*####+.
+        -..-=+***+  =---=+:....::--+++==--=**###*
+        =..-==+****  :..:=:......:.....===++*##*+
+         :.:-=++**#*      ........    ++++++****-
+          ...-=+**####              *#*++******=
+          =..:-=++**##%%#*       ####********+=
+            ...:-=+***#%%%%%%%%%%%%####****++=
+             ....:-=+*#####%%%%%%######**++=:
+               ....:-=++***###*#####**+==-:
+                  ....::-==++==+++===::..
+                      ..............`;
 
 type IdleHandle = { cancel: () => void };
 
@@ -21,17 +51,16 @@ function whenIdle(cb: () => void): IdleHandle {
 
 /**
  * Starts the live knot inside `stage`, taking pointer input from the whole `section`.
- * Returns a teardown function. If WebGL is unavailable, the stage is hidden and
- * the section keeps only its static copy.
+ * Returns a teardown function, or null when WebGL is unavailable.
  */
-function start(section: HTMLElement, stage: HTMLElement): () => void {
+function start(section: HTMLElement, stage: HTMLElement): (() => void) | null {
   const canvas = document.createElement('canvas');
   canvas.setAttribute('aria-hidden', 'true');
   canvas.className = 'absolute inset-0 h-full w-full';
 
   let stopped = false;
   const renderer = createAsciiRenderer(canvas, () => stop());
-  if (!renderer) return () => {};
+  if (!renderer) return null;
   stage.hidden = false;
   stage.appendChild(canvas);
 
@@ -160,6 +189,7 @@ function start(section: HTMLElement, stage: HTMLElement): () => void {
 export default function AsciiHero() {
   const ref = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const [noWebGL, setNoWebGL] = useState(false);
 
   useEffect(() => {
     const section = ref.current;
@@ -168,7 +198,9 @@ export default function AsciiHero() {
     let cancelled = false;
     let stop: (() => void) | null = null;
     const idle = whenIdle(() => {
-      if (!cancelled) stop = start(section, stage);
+      if (cancelled) return;
+      stop = start(section, stage);
+      if (!stop) setNoWebGL(true);
     });
     return () => {
       cancelled = true;
@@ -199,6 +231,16 @@ export default function AsciiHero() {
           </a>
         </div>
       </div>
+      {noWebGL && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none overflow-hidden px-4 pb-8 min-[760px]:absolute min-[760px]:inset-0 min-[760px]:flex min-[760px]:items-center min-[760px]:justify-end min-[760px]:pb-0 min-[760px]:pr-12 lg:pr-24"
+        >
+          <pre className="mx-auto font-mono text-[8px] leading-[9px] text-stone-300 min-[760px]:mx-0 sm:text-[10px] sm:leading-[11px] lg:text-[12px] lg:leading-[13px]">
+            {FALLBACK_ART}
+          </pre>
+        </div>
+      )}
       <div ref={stageRef} hidden className="relative h-[320px] min-[760px]:absolute min-[760px]:inset-0 min-[760px]:h-auto" />
     </section>
   );

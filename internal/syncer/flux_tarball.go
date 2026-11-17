@@ -23,6 +23,10 @@ const (
 	maxTotalSize int64 = 50 * 1024 * 1024 // 50 MiB total extracted limit
 )
 
+// DefaultPollInterval matches Flux's own 1m GitRepository interval; polling
+// faster would mostly re-read an unchanged object.
+const DefaultPollInterval = 60 * time.Second
+
 // Reloader defines an interface for notifying content stores when new
 // content has been extracted and is ready to be loaded.
 type Reloader interface {
@@ -34,6 +38,7 @@ type Reloader interface {
 // reloads on the configured Reloader.
 type FluxTarballSyncer struct {
 	artifactURL  string
+	resolve      ArtifactResolver
 	workspaceDir string
 	reloader     Reloader
 	httpClient   *http.Client
@@ -42,6 +47,7 @@ type FluxTarballSyncer struct {
 	mu        sync.RWMutex
 	activeDir string
 	etag      string
+	revision  string
 }
 
 // NewFluxTarballSyncer creates a new FluxTarballSyncer.
@@ -52,6 +58,13 @@ func NewFluxTarballSyncer(artifactURL, workspaceDir string, reloader Reloader) *
 		reloader:     reloader,
 		httpClient:   &http.Client{Timeout: 10 * time.Second},
 	}
+}
+
+// SetResolver makes SyncOnce look up the current artifact URL and revision on
+// every call instead of using the fixed artifactURL. A call whose revision is
+// already active returns without downloading anything.
+func (s *FluxTarballSyncer) SetResolver(r ArtifactResolver) {
+	s.resolve = r
 }
 
 // ActiveContentDir returns the currently active content root directory.
@@ -94,11 +107,25 @@ func (s *FluxTarballSyncer) SyncOnce(ctx context.Context) (bool, error) {
 	s.syncMu.Lock()
 	defer s.syncMu.Unlock()
 
-	if s.artifactURL == "" {
+	artifactURL, revision := s.artifactURL, ""
+	if s.resolve != nil {
+		var err error
+		artifactURL, revision, err = s.resolve(ctx)
+		if err != nil {
+			return false, err
+		}
+		s.mu.RLock()
+		same := s.revision == revision
+		s.mu.RUnlock()
+		if same {
+			return false, nil
+		}
+	}
+	if artifactURL == "" {
 		return false, fmt.Errorf("artifactURL is empty")
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s.artifactURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, artifactURL, nil)
 	if err != nil {
 		return false, fmt.Errorf("failed to create http request: %w", err)
 	}
@@ -108,7 +135,7 @@ func (s *FluxTarballSyncer) SyncOnce(ctx context.Context) (bool, error) {
 	currentETag := s.etag
 	s.mu.RUnlock()
 
-	if currentETag != "" {
+	if currentETag != "" && s.resolve == nil {
 		req.Header.Set("If-None-Match", currentETag)
 	}
 
@@ -232,8 +259,10 @@ func (s *FluxTarballSyncer) SyncOnce(ctx context.Context) (bool, error) {
 	s.mu.Lock()
 	oldActive := s.activeDir
 	oldETag := s.etag
+	oldRevision := s.revision
 	s.activeDir = stagingDir
 	s.etag = resp.Header.Get("ETag")
+	s.revision = revision
 	s.mu.Unlock()
 
 	// Notify reloader
@@ -243,6 +272,7 @@ func (s *FluxTarballSyncer) SyncOnce(ctx context.Context) (bool, error) {
 			s.mu.Lock()
 			s.activeDir = oldActive
 			s.etag = oldETag
+			s.revision = oldRevision
 			s.mu.Unlock()
 			return false, fmt.Errorf("reloader failed: %w", err)
 		}
@@ -266,7 +296,7 @@ func (s *FluxTarballSyncer) SyncOnce(ctx context.Context) (bool, error) {
 // Polling stops when ctx is cancelled.
 func (s *FluxTarballSyncer) Start(ctx context.Context, interval time.Duration) {
 	if interval <= 0 {
-		interval = 30 * time.Second
+		interval = DefaultPollInterval
 	}
 	go func() {
 		ticker := time.NewTicker(interval)

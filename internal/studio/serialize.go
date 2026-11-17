@@ -11,14 +11,13 @@ import (
 // structural only: a draft may hold values the production parser rejects
 // (empty title, unknown topic); Lint/ValidatePost report those.
 type Frontmatter struct {
-	Title           string   `json:"title"`
-	Slug            string   `json:"slug"`
-	Date            string   `json:"date"`
-	Topic           string   `json:"topic"`
-	Project         string   `json:"project"`
-	Summary         string   `json:"summary"`
-	Tags            []string `json:"tags"`
-	ReadTimeMinutes int      `json:"readTimeMinutes,omitempty"`
+	Title           string `json:"title"`
+	Slug            string `json:"slug"`
+	Date            string `json:"date"`
+	Topic           string `json:"topic"`
+	Project         string `json:"project"`
+	Summary         string `json:"summary"`
+	ReadTimeMinutes int    `json:"readTimeMinutes,omitempty"`
 	// Extra holds unknown frontmatter lines verbatim so they survive a round trip.
 	Extra []string `json:"extra,omitempty"`
 }
@@ -49,7 +48,7 @@ func ParseDocument(data []byte) (*Document, error) {
 		return nil, fmt.Errorf("%w: missing closing --- delimiter", ErrFrontmatter)
 	}
 
-	doc := &Document{Body: body, Frontmatter: Frontmatter{Tags: []string{}}}
+	doc := &Document{Body: body, Frontmatter: Frontmatter{}}
 	f := &doc.Frontmatter
 	var current string // key owning following "- item" lines
 	for _, line := range strings.Split(fm, "\n") {
@@ -58,11 +57,7 @@ func ParseDocument(data []byte) (*Document, error) {
 			continue
 		}
 		if strings.HasPrefix(trimmed, "- ") {
-			if current == "tags" {
-				if item := unquote(strings.TrimPrefix(trimmed, "- ")); item != "" {
-					f.Tags = append(f.Tags, item)
-				}
-			} else if current == "" {
+			if current == "" {
 				f.Extra = append(f.Extra, line)
 			}
 			continue
@@ -92,13 +87,7 @@ func ParseDocument(data []byte) (*Document, error) {
 		case "readtimeminutes":
 			f.ReadTimeMinutes, _ = strconv.Atoi(unquote(val))
 		case "tags":
-			if strings.HasPrefix(val, "[") && strings.HasSuffix(val, "]") {
-				for _, p := range strings.Split(val[1:len(val)-1], ",") {
-					if item := unquote(strings.TrimSpace(p)); item != "" {
-						f.Tags = append(f.Tags, item)
-					}
-				}
-			}
+			// Legacy key: dropped on save. Its "- item" lines are skipped too.
 		default:
 			f.Extra = append(f.Extra, line)
 			current = "" // unknown key: keep its "- item" lines with it
@@ -129,11 +118,6 @@ func SerializeDocument(doc *Document) ([]byte, error) {
 			return nil, fmt.Errorf("%w: %s must be a single line", ErrFrontmatter, name)
 		}
 	}
-	for _, t := range f.Tags {
-		if strings.ContainsAny(t, ",\r\n") || strings.TrimSpace(t) == "" {
-			return nil, fmt.Errorf("%w: tag %q must be non-empty without commas or newlines", ErrFrontmatter, t)
-		}
-	}
 
 	var b strings.Builder
 	q := func(s string) string { return `"` + s + `"` }
@@ -146,11 +130,6 @@ func SerializeDocument(doc *Document) ([]byte, error) {
 		fmt.Fprintf(&b, "project: %s\n", q(f.Project))
 	}
 	fmt.Fprintf(&b, "summary: %s\n", q(f.Summary))
-	tags := make([]string, len(f.Tags))
-	for i, t := range f.Tags {
-		tags[i] = q(strings.TrimSpace(t))
-	}
-	fmt.Fprintf(&b, "tags: [%s]\n", strings.Join(tags, ", "))
 	if f.ReadTimeMinutes > 0 {
 		fmt.Fprintf(&b, "readTimeMinutes: %d\n", f.ReadTimeMinutes)
 	}

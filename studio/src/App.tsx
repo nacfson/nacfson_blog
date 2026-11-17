@@ -33,7 +33,6 @@ const EMPTY_FRONTMATTER: Frontmatter = {
   topic: '',
   project: '',
   summary: '',
-  tags: [],
 };
 
 function nowHHMMSS(): string {

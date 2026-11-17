@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -75,21 +75,22 @@ afterEach(() => {
 });
 
 describe('AsciiHero', () => {
-  it('shows the plain headline and no canvas when WebGL is unavailable', async () => {
+  it('shows the headline and a static knot, with no canvas, when WebGL is unavailable', async () => {
     const actual = await vi.importActual<typeof import('../../lib/ascii/renderer')>('../../lib/ascii/renderer');
     create.mockImplementation(actual.createAsciiRenderer);
     const errors = vi.spyOn(console, 'error');
 
     const { container } = render(<AsciiHero />);
-    flushIdle();
+    act(() => flushIdle());
     tick(2);
 
     expect(screen.getByRole('heading', { level: 1, name: 'Make Better World' })).toBeInTheDocument();
     expect(screen.getByText(/good engineering can make the world a little better/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Browse articles ↓' })).toHaveAttribute('href', '#articles');
     expect(container.querySelector('canvas')).toBeNull();
-    // The empty knot strip stays hidden, so narrow screens get no blank 320px gap.
+    // The live stage stays hidden and a still frame of the knot takes its place.
     expect(container.querySelector('section > div[hidden]')).not.toBeNull();
+    expect(container.querySelector('section pre')?.textContent).toContain('###');
     expect(errors).not.toHaveBeenCalled();
   });
 

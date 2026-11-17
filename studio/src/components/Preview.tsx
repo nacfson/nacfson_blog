@@ -50,19 +50,6 @@ export const Preview: React.FC<PreviewProps> = ({ frontmatter, markdown }) => {
           {frontmatter.summary && (
             <p className="text-sm text-stone-600 leading-relaxed pt-0.5">{frontmatter.summary}</p>
           )}
-
-          {frontmatter.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              {frontmatter.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="px-2 py-0.5 rounded text-[10px] font-medium bg-stone-100 text-stone-600 font-mono"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
         </header>
 
         <article className="max-w-none">

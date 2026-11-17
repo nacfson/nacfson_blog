@@ -228,7 +228,7 @@ type failingStore struct {
 	err error
 }
 
-func (f *failingStore) ListPosts(ctx context.Context, topic, tag string) ([]content.PostSummary, error) {
+func (f *failingStore) ListPosts(ctx context.Context, topic string) ([]content.PostSummary, error) {
 	return nil, f.err
 }
 

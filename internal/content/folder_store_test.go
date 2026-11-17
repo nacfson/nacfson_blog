@@ -21,7 +21,7 @@ func TestFolderStore_LoadsAndFiltersPosts(t *testing.T) {
 		t.Fatalf("NewFolderStore failed: %v", err)
 	}
 
-	posts, err := store.ListPosts(context.Background(), "", "")
+	posts, err := store.ListPosts(context.Background(), "")
 	if err != nil || len(posts) == 0 {
 		t.Fatalf("expected at least 1 seeded post, got %d (err=%v)", len(posts), err)
 	}
@@ -29,9 +29,9 @@ func TestFolderStore_LoadsAndFiltersPosts(t *testing.T) {
 		t.Errorf("expected slug cilium-zero-plaintext-k3s, got %q", posts[0].Slug)
 	}
 
-	filtered, err := store.ListPosts(context.Background(), "cloud-native", "Cilium")
+	filtered, err := store.ListPosts(context.Background(), "cloud-native")
 	if err != nil || len(filtered) != 1 {
-		t.Fatalf("expected 1 post matching topic+tag, got %d (err=%v)", len(filtered), err)
+		t.Fatalf("expected 1 post matching topic, got %d (err=%v)", len(filtered), err)
 	}
 
 	post, err := store.GetPost(context.Background(), "cilium-zero-plaintext-k3s")
@@ -77,32 +77,6 @@ func TestFolderStore_RejectsInvalidFrontmatter(t *testing.T) {
 	}
 }
 
-func TestFolderStore_GetPost_TagsSliceIsolation(t *testing.T) {
-	root, err := filepath.Abs("../../tests/fixtures/content")
-	if err != nil {
-		t.Fatalf("abs path: %v", err)
-	}
-	store, err := content.NewFolderStore(func() string { return root })
-	if err != nil {
-		t.Fatalf("NewFolderStore failed: %v", err)
-	}
-
-	post1, err := store.GetPost(context.Background(), "cilium-zero-plaintext-k3s")
-	if err != nil {
-		t.Fatalf("GetPost failed: %v", err)
-	}
-	origCount := len(post1.Tags)
-	post1.Tags = append(post1.Tags, "MutatedTag")
-
-	post2, err := store.GetPost(context.Background(), "cilium-zero-plaintext-k3s")
-	if err != nil {
-		t.Fatalf("GetPost failed: %v", err)
-	}
-	if len(post2.Tags) != origCount {
-		t.Fatalf("modifying returned tags slice mutated the store: expected %d, got %d", origCount, len(post2.Tags))
-	}
-}
-
 func TestFolderStore_Sorting(t *testing.T) {
 	tmp := t.TempDir()
 	postsDir := filepath.Join(tmp, "posts")
@@ -129,7 +103,7 @@ func TestFolderStore_Sorting(t *testing.T) {
 		t.Fatalf("NewFolderStore: %v", err)
 	}
 
-	posts, err := store.ListPosts(context.Background(), "", "")
+	posts, err := store.ListPosts(context.Background(), "")
 	if err != nil {
 		t.Fatalf("ListPosts: %v", err)
 	}
@@ -159,7 +133,7 @@ func TestFolderStore_ConcurrentAccessAndReload(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		go func() {
 			for j := 0; j < 50; j++ {
-				_, _ = store.ListPosts(context.Background(), "", "")
+				_, _ = store.ListPosts(context.Background(), "")
 				_, _ = store.GetPost(context.Background(), "cilium-zero-plaintext-k3s")
 			}
 			done <- true
@@ -189,7 +163,7 @@ func TestFolderStore_EmptyPostsDirectory(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewFolderStore on empty posts dir: %v", err)
 	}
-	posts, err := store.ListPosts(context.Background(), "", "")
+	posts, err := store.ListPosts(context.Background(), "")
 	if err != nil {
 		t.Fatalf("ListPosts: %v", err)
 	}
@@ -238,8 +212,26 @@ func TestFolderStore_TopicValidationAndFiltering(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewFolderStore: %v", err)
 	}
-	got, err := store.ListPosts(context.Background(), "zero-trust", "")
+	got, err := store.ListPosts(context.Background(), "zero-trust")
 	if err != nil || len(got) != 1 || got[0].Slug != "a" || got[0].Topic != content.TopicZeroTrust {
 		t.Fatalf("expected only post a with topic zero-trust, got %+v (err=%v)", got, err)
+	}
+}
+
+func TestFolderStore_IgnoresLegacyTagsFrontmatter(t *testing.T) {
+	tmp := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(tmp, "posts"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	md := "---\ntitle: \"Old\"\nslug: \"old\"\ndate: \"2026-11-17\"\ntopic: \"personal\"\ntags:\n  - a\n  - b\n---\nBody\n"
+	if err := os.WriteFile(filepath.Join(tmp, "posts", "old.md"), []byte(md), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	store, err := content.NewFolderStore(func() string { return tmp })
+	if err != nil {
+		t.Fatalf("a post with a legacy tags list must still load: %v", err)
+	}
+	if _, err := store.GetPost(context.Background(), "old"); err != nil {
+		t.Fatal(err)
 	}
 }

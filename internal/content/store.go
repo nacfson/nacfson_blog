@@ -17,14 +17,13 @@ const (
 
 // PostSummary contains metadata for post listings and navigation.
 type PostSummary struct {
-	Slug            string   `json:"slug"`
-	Title           string   `json:"title"`
-	Date            string   `json:"date"`
-	Topic           Topic    `json:"topic"`
-	Project         string   `json:"project,omitempty"`
-	Summary         string   `json:"summary"`
-	Tags            []string `json:"tags"`
-	ReadTimeMinutes int      `json:"readTimeMinutes"`
+	Slug            string `json:"slug"`
+	Title           string `json:"title"`
+	Date            string `json:"date"`
+	Topic           Topic  `json:"topic"`
+	Project         string `json:"project,omitempty"`
+	Summary         string `json:"summary"`
+	ReadTimeMinutes int    `json:"readTimeMinutes"`
 }
 
 // Post represents a full blog post including its markdown content.
@@ -35,7 +34,7 @@ type Post struct {
 
 // ContentStore provides access to blog posts.
 type ContentStore interface {
-	ListPosts(ctx context.Context, topic, tag string) ([]PostSummary, error)
+	ListPosts(ctx context.Context, topic string) ([]PostSummary, error)
 	GetPost(ctx context.Context, slug string) (*Post, error)
 }
 

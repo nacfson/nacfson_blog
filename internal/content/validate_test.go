@@ -33,8 +33,8 @@ func TestValidatePost_Valid(t *testing.T) {
 	if post.Title != `Running "AI" Agents: On K3s` {
 		t.Errorf("title = %q", post.Title)
 	}
-	if len(post.Tags) != 2 || post.ReadTimeMinutes != 1 {
-		t.Errorf("tags=%v readTime=%d", post.Tags, post.ReadTimeMinutes)
+	if post.ReadTimeMinutes != 1 {
+		t.Errorf("readTime=%d", post.ReadTimeMinutes)
 	}
 	if post.MarkdownBody != "Body text.\n" {
 		t.Errorf("body = %q", post.MarkdownBody)

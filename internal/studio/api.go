@@ -262,7 +262,7 @@ func (s *Server) draftPayload(ctx context.Context, key string) (*draftResponse, 
 	doc, err := ParseDocument(data)
 	if err != nil {
 		// Hand-edited file with broken delimiters: show it all as body.
-		doc = &Document{Frontmatter: Frontmatter{Tags: []string{}}, Body: string(data)}
+		doc = &Document{Frontmatter: Frontmatter{}, Body: string(data)}
 	}
 	issues, err := s.m.LintDraft(ctx, key, data)
 	if err != nil {
@@ -300,7 +300,7 @@ func (s *Server) createDraft(w http.ResponseWriter, r *http.Request) {
 	key := s.m.UniqueKey(ctx, base)
 	date := s.now().Format("2006-01-02")
 	data, err := SerializeDocument(&Document{
-		Frontmatter: Frontmatter{Title: title, Slug: key, Date: date, Tags: []string{}},
+		Frontmatter: Frontmatter{Title: title, Slug: key, Date: date},
 		Body:        "Start writing here.\n\n## First section\n",
 	})
 	if err != nil {

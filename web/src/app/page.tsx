@@ -208,14 +208,6 @@ function PostCard({ post }: { post: PostSummary }) {
           {post.title}
         </h3>
         <p className="text-xs leading-relaxed text-stone-600 line-clamp-3">{post.summary}</p>
-        <div className="mt-auto flex flex-wrap gap-1.5 pt-3">
-          {post.tags.slice(0, 3).map((tag) => (
-            <span key={tag} className="rounded-sm bg-stone-100 px-2 py-0.5 text-[10px] font-medium text-stone-600">
-              #{tag}
-            </span>
-          ))}
-          {post.tags.length > 3 && <span className="px-1 py-0.5 text-[10px] text-stone-400">+{post.tags.length - 3}</span>}
-        </div>
       </div>
     </Link>
   );

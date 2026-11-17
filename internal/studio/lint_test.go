@@ -9,7 +9,7 @@ func lintFile(fm, body string, opts LintOptions) []Issue {
 	return Lint([]byte("---\n"+fm+"---\n\n"+body), "x.md", opts)
 }
 
-const goodFM = "title: \"T\"\nslug: \"t\"\ndate: \"2026-11-04\"\ntopic: \"ai-agents\"\nsummary: \"S\"\ntags: []\n"
+const goodFM = "title: \"T\"\nslug: \"t\"\ndate: \"2026-11-04\"\ntopic: \"ai-agents\"\nsummary: \"S\"\n"
 
 func find(issues []Issue, sub string) *Issue {
 	for i := range issues {
