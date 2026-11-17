@@ -64,7 +64,6 @@ func TestValidatePost_Rejects(t *testing.T) {
 		{"slug with space", replace("ai-agents-on-k3s", "ai agents"), "invalid slug", true},
 		{"missing date", replace("date: \"2026-11-04\"\n", ""), "date is required", false},
 		{"missing topic", replace("topic: \"ai-agents\"\n", ""), "invalid topic", false},
-		{"unknown topic", replace("\"ai-agents\"\nproject", "\"project-updates\"\nproject"), "invalid topic", false},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -137,7 +136,7 @@ func TestValidateDir_Rejects(t *testing.T) {
 	})
 	t.Run("one invalid post fails the whole index", func(t *testing.T) {
 		bad := strings.Replace(validPost, "ai-agents-on-k3s", "other", 1)
-		bad = strings.Replace(bad, "topic: \"ai-agents\"", "topic: \"nope\"", 1)
+		bad = strings.Replace(bad, "topic: \"ai-agents\"", "topic: \"\"", 1)
 		root := writeRoot(t, map[string]string{"good.md": validPost, "bad.md": bad})
 		err := content.ValidateDir(root)
 		if err == nil || !strings.Contains(err.Error(), "bad.md") {
@@ -154,7 +153,7 @@ func TestValidateDir_Rejects(t *testing.T) {
 // ValidateDir must agree with what the server would do on Reload.
 func TestValidateDir_MatchesFolderStore(t *testing.T) {
 	other := strings.Replace(validPost, "ai-agents-on-k3s", "second-post", 1)
-	badTopic := strings.Replace(other, "topic: \"ai-agents\"", "topic: \"pillar\"", 1)
+	badTopic := strings.Replace(other, "topic: \"ai-agents\"", "topic: \"\"", 1)
 	cases := map[string]map[string]string{
 		"valid":     {"a.md": validPost, "b.md": other},
 		"duplicate": {"a.md": validPost, "b.md": validPost},

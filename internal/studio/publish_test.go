@@ -216,7 +216,7 @@ func TestPublish_InvalidDraftCommitsNothing(t *testing.T) {
 	e := newEnv(t)
 	ctx := context.Background()
 	e.create(t, "broken", "Broken")
-	_ = e.m.Write(ctx, "broken", []byte(post("Broken", "broken", "2026-11-04", "nope")))
+	_ = e.m.Write(ctx, "broken", []byte(post("Broken", "broken", "2026-11-04", "")))
 	before := git(t, e.origin, "rev-parse", "main")
 
 	var ve *ValidationError

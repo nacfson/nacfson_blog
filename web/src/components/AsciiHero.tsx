@@ -187,7 +187,6 @@ export default function AsciiHero() {
       {/* Narrow: the copy sits above the knot. Wide: the copy is laid over the full-band knot. */}
       <div className="pointer-events-none relative z-10 mx-auto max-w-7xl px-4 pb-8 pt-10 sm:px-6 min-[760px]:pb-0 min-[760px]:pt-16 lg:px-8">
         <div className="min-[760px]:max-w-[470px]">
-          <p className="mb-3.5 font-mono text-[11px] uppercase tracking-[0.06em] text-stone-500">Rendered in text, live</p>
           <h1 id="hero-title" className="font-serif text-[40px] font-bold leading-none tracking-tight text-stone-50 sm:text-5xl lg:text-6xl">
             Make Better World
           </h1>

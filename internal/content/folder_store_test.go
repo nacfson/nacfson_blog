@@ -64,7 +64,7 @@ func TestFolderStore_RejectsInvalidFrontmatter(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(tmp, "posts"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	badMD := "---\ntitle: \"Missing Slug and Bad Topic\"\ndate: \"2026-10-24\"\ntopic: \"invalid-topic\"\n---\nBody\n"
+	badMD := "---\ntitle: \"Missing Slug and Bad Topic\"\ndate: \"2026-10-24\"\ntopic: \"\"\n---\nBody\n"
 	if err := os.WriteFile(filepath.Join(tmp, "posts", "bad.md"), []byte(badMD), 0o644); err != nil {
 		t.Fatal(err)
 	}

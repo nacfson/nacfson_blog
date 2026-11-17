@@ -10,11 +10,10 @@ interface PreviewProps {
   markdown: string;
 }
 
-const VALID_TOPICS = new Set<string>(['cloud-native', 'zero-trust', 'ai-agents', 'open-source']);
 
 export const Preview: React.FC<PreviewProps> = ({ frontmatter, markdown }) => {
   const readMins = frontmatter.readTimeMinutes || estimateReadMinutes(markdown);
-  const hasValidTopic = VALID_TOPICS.has(frontmatter.topic);
+  const hasValidTopic = frontmatter.topic.trim() !== '';
 
   return (
     <div className="pane">

@@ -265,7 +265,7 @@ func TestSave_InvalidPostCommitsNothing(t *testing.T) {
 	e.create(t, "bad", "Bad")
 
 	cases := map[string]string{
-		"bad topic":      post("Bad", "bad", "2026-11-04", "pillar"),
+		"bad topic":      post("Bad", "bad", "2026-11-04", ""),
 		"no frontmatter": "just text\n",
 		"loose date":     post("Bad", "bad", "Nov 4", "ai-agents"),
 		"duplicate slug": post("Bad", "existing", "2026-11-05", "ai-agents"),

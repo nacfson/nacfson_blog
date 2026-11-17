@@ -29,7 +29,7 @@ func TestLint_CleanPost(t *testing.T) {
 }
 
 func TestLint_FrontmatterErrors(t *testing.T) {
-	fm := "title: \"\"\nslug: \"bad slug\"\ndate: \"Nov 4\"\ntopic: \"pillar\"\nsummary: \"\"\n"
+	fm := "title: \"\"\nslug: \"bad slug\"\ndate: \"Nov 4\"\ntopic: \"\"\nsummary: \"\"\n"
 	issues := lintFile(fm, "body\n", LintOptions{})
 	want := map[string]Severity{"title": SevError, "slug": SevError, "date": SevError, "topic": SevError, "summary": SevWarn}
 	got := map[string]Severity{}

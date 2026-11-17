@@ -1,5 +1,4 @@
 import React from 'react';
-import { Topic } from '@web/lib/types';
 import { Frontmatter, Issue } from '../types';
 
 interface FrontmatterFormProps {
@@ -70,22 +69,16 @@ export const FrontmatterForm: React.FC<FrontmatterFormProps> = ({
 
       <label>
         Topic
-        <select
+        <input
           id="f-topic"
           aria-label="Topic"
           className={hasError('topic') ? 'bad' : ''}
+          autoComplete="off"
           disabled={disabled}
+          placeholder="e.g. cloud-native"
           value={frontmatter.topic}
-          onChange={(e) =>
-            onChange({ ...frontmatter, topic: e.target.value as Topic | '' }, false)
-          }
-        >
-          <option value="">Choose…</option>
-          <option value="cloud-native">Cloud Native</option>
-          <option value="zero-trust">Zero Trust</option>
-          <option value="ai-agents">AI Agents</option>
-          <option value="open-source">Open Source</option>
-        </select>
+          onChange={(e) => onChange({ ...frontmatter, topic: e.target.value }, false)}
+        />
       </label>
 
       <label className="wide">

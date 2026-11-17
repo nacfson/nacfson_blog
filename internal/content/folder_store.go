@@ -289,12 +289,8 @@ func parseFrontmatter(fm, filename string) (*PostSummary, error) {
 	if summary.Date == "" {
 		return nil, fmt.Errorf("%s: date is required in post frontmatter", filename)
 	}
-	switch summary.Topic {
-	case TopicCloudNative, TopicZeroTrust, TopicAIAgents, TopicOpenSource:
-		// valid
-	default:
-		return nil, fmt.Errorf("%s: invalid topic %q: must be one of %s, %s, %s, %s",
-			filename, summary.Topic, TopicCloudNative, TopicZeroTrust, TopicAIAgents, TopicOpenSource)
+	if strings.TrimSpace(string(summary.Topic)) == "" {
+		return nil, fmt.Errorf("%s: invalid topic %q: topic is required in post frontmatter", filename, summary.Topic)
 	}
 
 	return summary, nil

@@ -129,4 +129,13 @@ describe('MarkdownDispatcher', () => {
     expect(screen.getByText('Live Demo Tab')).toBeDefined();
     expect(screen.getByRole('button', { name: /Launch Interactive Demo/i })).toBeDefined();
   });
+
+  it('renders a single newline inside a paragraph as a line break', () => {
+    const { container } = render(
+      <MarkdownDispatcher markdown={"Hi, I'm nacfson.\nI'm a backend engineer."} />
+    );
+    const p = container.querySelector('p');
+    expect(p?.querySelectorAll('br')).toHaveLength(1);
+    expect(p?.textContent).toBe("Hi, I'm nacfson.I'm a backend engineer.");
+  });
 });

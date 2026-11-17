@@ -56,7 +56,20 @@ function renderInline(text: string): React.ReactNode[] {
         </a>
       );
     }
-    return part;
+    // A single newline inside a block is a hard line break, matching what the
+    // author sees in the editor.
+    const lines = part.split('\n');
+    if (lines.length === 1) return part;
+    return (
+      <React.Fragment key={i}>
+        {lines.map((line, j) => (
+          <React.Fragment key={j}>
+            {j > 0 && <br />}
+            {line}
+          </React.Fragment>
+        ))}
+      </React.Fragment>
+    );
   });
 }
 
