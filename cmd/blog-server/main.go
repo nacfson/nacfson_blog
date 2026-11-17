@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -52,6 +53,15 @@ func main() {
 	seedContentDir := getEnv("SEED_CONTENT_DIR", "/app/seed-content")
 	webOutDir := getEnv("WEB_OUT_DIR", "/app/web/out")
 	fluxArtifactURL := os.Getenv("FLUX_ARTIFACT_URL")
+	fluxGitRepository := os.Getenv("FLUX_GITREPOSITORY")
+	pollInterval := syncer.DefaultPollInterval
+	if v := os.Getenv("FLUX_POLL_INTERVAL"); v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil || d <= 0 {
+			logx.Fatal(logger, "invalid FLUX_POLL_INTERVAL", fmt.Errorf("%q is not a positive duration", v))
+		}
+		pollInterval = d
+	}
 
 	logger.Info("initializing blog-server",
 		"port", port,
@@ -62,6 +72,13 @@ func main() {
 
 	reloader := &storeReloader{}
 	fluxSyncer := syncer.NewFluxTarballSyncer(fluxArtifactURL, contentWorkspaceDir, reloader)
+	if fluxGitRepository != "" {
+		resolver, err := syncer.InClusterGitRepositoryResolver(fluxGitRepository)
+		if err != nil {
+			logx.Fatal(logger, "cannot resolve flux artifact from the cluster", err, "flux_gitrepository", fluxGitRepository)
+		}
+		fluxSyncer.SetResolver(resolver)
+	}
 
 	// Seed workspace directory if not already populated
 	if err := fluxSyncer.SeedIfEmpty(seedContentDir); err != nil {
@@ -82,9 +99,9 @@ func main() {
 	serverCtx, serverStop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer serverStop()
 
-	// If FLUX_ARTIFACT_URL is set, run SyncOnce on startup and start periodic polling
-	if fluxArtifactURL != "" {
-		logger.Info("performing initial flux artifact sync", "flux_artifact_url", fluxArtifactURL)
+	// If FLUX_GITREPOSITORY or FLUX_ARTIFACT_URL is set, run SyncOnce on startup and start periodic polling
+	if fluxGitRepository != "" || fluxArtifactURL != "" {
+		logger.Info("performing initial flux artifact sync", "flux_artifact_url", fluxArtifactURL, "flux_gitrepository", fluxGitRepository)
 		func() {
 			syncCtx, syncCancel := context.WithTimeout(serverCtx, 30*time.Second)
 			defer syncCancel()
@@ -96,7 +113,7 @@ func main() {
 			}
 		}()
 
-		fluxSyncer.Start(serverCtx, 30*time.Second)
+		fluxSyncer.Start(serverCtx, pollInterval)
 	}
 
 	// Build HTTP handler
