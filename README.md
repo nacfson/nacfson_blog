@@ -51,6 +51,7 @@ Built with a zero-dependency Go 1.22 standard-library server, a monochrome Next.
 | :--- | :--- |
 | `cmd/blog-server/` | Production `blog-web` HTTP server entrypoint |
 | `cmd/blog-studio/` | Local-only Blog Studio CLI entrypoint |
+| `internal/analytics/` | Cookieless `blog.analytics` page-view lines on stdout, one per view, with a daily in-memory visitor key ([contract](./docs/analytics-contract.md)) |
 | `internal/content/` | Post domain types (`Topic`, `PostSummary`, `Post`), thread-safe `FolderStore`, and `ValidatePost` / `ValidateDir` |
 | `internal/logx/` | Structured JSON `log/slog` handler, exception normalization, bounded stack traces, and W3C `traceparent` helpers |
 | `internal/server/` | `http.ServeMux` router, path-traversal guards, demo CSP headers, static SPA fallback, and `RequestLogger` middleware |
