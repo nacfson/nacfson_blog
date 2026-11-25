@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nacfson/nacfson_blog/internal/analytics"
 	"github.com/nacfson/nacfson_blog/internal/content"
 	"github.com/nacfson/nacfson_blog/internal/logx"
 )
@@ -102,7 +103,8 @@ func RequestLogger(logger *slog.Logger, next http.Handler) http.Handler {
 }
 
 // NewHandler constructs and configures the HTTP router for the blog service.
-func NewHandler(store content.ContentStore, activeContentDir func() string, webOutDir string) http.Handler {
+// Successful post-list and post responses are recorded as page views on views.
+func NewHandler(store content.ContentStore, activeContentDir func() string, webOutDir string, views *analytics.Recorder) http.Handler {
 	mux := http.NewServeMux()
 
 	// GET /healthz -> 200 OK {"status":"ok"}
@@ -123,6 +125,7 @@ func NewHandler(store content.ContentStore, activeContentDir func() string, webO
 		if posts == nil {
 			posts = []content.PostSummary{}
 		}
+		views.RecordView(r, analytics.Home)
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(posts)
 	})
@@ -143,6 +146,7 @@ func NewHandler(store content.ContentStore, activeContentDir func() string, webO
 			recordServerError(w, err)
 			return
 		}
+		views.RecordView(r, analytics.PostPage(post.PostSummary))
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(post)
 	})
