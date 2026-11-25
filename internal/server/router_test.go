@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -14,12 +15,22 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/nacfson/nacfson_blog/internal/analytics"
 	"github.com/nacfson/nacfson_blog/internal/content"
 	"github.com/nacfson/nacfson_blog/internal/logx"
 	"github.com/nacfson/nacfson_blog/internal/server"
 )
 
+func discardViews() *analytics.Recorder {
+	return analytics.New(logx.New(io.Discard, "", ""))
+}
+
 func setupTestServer(t *testing.T) http.Handler {
+	t.Helper()
+	return setupTestServerWithViews(t, discardViews())
+}
+
+func setupTestServerWithViews(t *testing.T, views *analytics.Recorder) http.Handler {
 	t.Helper()
 	contentRoot, err := filepath.Abs("../../tests/fixtures/content")
 	if err != nil {
@@ -39,7 +50,7 @@ func setupTestServer(t *testing.T) http.Handler {
 	if err := os.WriteFile(filepath.Join(webOut, "post", "index.html"), []byte("<html><body>Post Shell</body></html>"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	return server.NewHandler(store, func() string { return contentRoot }, webOut)
+	return server.NewHandler(store, func() string { return contentRoot }, webOut, views)
 }
 
 func TestRouter_HealthAndAPIEndpoints(t *testing.T) {
@@ -117,7 +128,7 @@ func TestRouter_EmptyContentServesEmptyPostList(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewFolderStore on empty content: %v", err)
 	}
-	h := server.NewHandler(store, func() string { return contentRoot }, t.TempDir())
+	h := server.NewHandler(store, func() string { return contentRoot }, t.TempDir(), discardViews())
 
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/posts", nil))
@@ -299,7 +310,7 @@ func TestRouter_RequestLoggingAndTraceparent(t *testing.T) {
 	buf.Reset()
 	pathErr := &os.PathError{Op: "open", Path: "/var/run/blog-content", Err: os.ErrPermission}
 	wrappedErr := fmt.Errorf("index failure: %w", pathErr)
-	errHandler := server.NewHandler(&failingStore{err: wrappedErr}, nil, "")
+	errHandler := server.NewHandler(&failingStore{err: wrappedErr}, nil, "", discardViews())
 	rec = httptest.NewRecorder()
 	errHandler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/posts", nil))
 	if rec.Code != http.StatusInternalServerError {
@@ -324,3 +335,86 @@ func TestRouter_RequestLoggingAndTraceparent(t *testing.T) {
 	}
 }
 
+func TestRouter_RecordsEveryPageViewOnSuccessfulResponses(t *testing.T) {
+	var views bytes.Buffer
+	h := setupTestServerWithViews(t, analytics.New(logx.New(&views, "blog-web", "v1.4.2")))
+	get := func(path, ua string) int {
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		req.Header.Set("User-Agent", ua)
+		req.Header.Set("X-Real-Ip", "198.51.100.23")
+		req.Header.Set("traceparent", "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01")
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		return rec.Code
+	}
+	const browser = "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) Safari/605.1.15"
+
+	for _, tc := range []struct {
+		path, ua string
+		status   int
+	}{
+		{"/api/posts", browser, http.StatusOK},
+		{"/api/posts/cilium-zero-plaintext-k3s", browser, http.StatusOK},
+		{"/api/posts/cilium-zero-plaintext-k3s", browser, http.StatusOK},
+		{"/api/posts/cilium-zero-plaintext-k3s", "Googlebot/2.1", http.StatusOK},
+		{"/api/posts/no-such-post", browser, http.StatusNotFound},
+		{"/api/posts/bad%21slug", browser, http.StatusBadRequest},
+		{"/healthz", browser, http.StatusOK},
+	} {
+		if got := get(tc.path, tc.ua); got != tc.status {
+			t.Fatalf("GET %s: status %d, want %d", tc.path, got, tc.status)
+		}
+	}
+
+	var got []map[string]any
+	for _, line := range strings.Split(strings.TrimSpace(views.String()), "\n") {
+		var m map[string]any
+		if err := json.Unmarshal([]byte(line), &m); err != nil {
+			t.Fatalf("view line is not JSON: %q (%v)", line, err)
+		}
+		got = append(got, m)
+	}
+	if len(got) != 3 {
+		t.Fatalf("want 3 view lines (home, post, post again), got %d:\n%s", len(got), views.String())
+	}
+	if got[0]["page.kind"] != "home" {
+		t.Errorf("first view = %v, want home", got[0])
+	}
+	for _, m := range got[1:] {
+		if m["page.kind"] != "post" || m["page.slug"] != "cilium-zero-plaintext-k3s" || m["page.topic"] != "cloud-native" {
+			t.Errorf("view = %v, want post cilium-zero-plaintext-k3s/cloud-native", m)
+		}
+	}
+	for _, m := range got {
+		if m["event.name"] != "blog.analytics" {
+			t.Errorf("event.name = %v", m["event.name"])
+		}
+		if m["visitor.id"] != got[0]["visitor.id"] {
+			t.Errorf("visitor.id = %v, want %v for the same visitor", m["visitor.id"], got[0]["visitor.id"])
+		}
+		if _, ok := m["trace_id"]; ok {
+			t.Errorf("analytics line must not carry trace_id: %v", m)
+		}
+	}
+	if got[1]["event.id"] == got[2]["event.id"] {
+		t.Errorf("repeat view reused event.id %v", got[1]["event.id"])
+	}
+}
+
+func TestRouter_ServerErrorRecordsNoPageView(t *testing.T) {
+	var views bytes.Buffer
+	h := server.NewHandler(&failingStore{err: os.ErrPermission}, nil, "",
+		analytics.New(logx.New(&views, "", "")))
+	for _, path := range []string{"/api/posts", "/api/posts/some-post"} {
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		req.Header.Set("User-Agent", "Mozilla/5.0 Firefox/133.0")
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, req)
+		if rec.Code != http.StatusInternalServerError {
+			t.Fatalf("GET %s: status %d, want 500", path, rec.Code)
+		}
+	}
+	if views.Len() != 0 {
+		t.Fatalf("500 responses must not record views, got:\n%s", views.String())
+	}
+}

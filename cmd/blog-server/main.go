@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/nacfson/nacfson_blog/internal/analytics"
 	"github.com/nacfson/nacfson_blog/internal/content"
 	"github.com/nacfson/nacfson_blog/internal/logx"
 	"github.com/nacfson/nacfson_blog/internal/server"
@@ -117,7 +118,8 @@ func main() {
 	}
 
 	// Build HTTP handler
-	handler := server.NewHandler(store, fluxSyncer.ActiveContentDir, webOutDir)
+	views := analytics.New(logx.New(os.Stdout, serviceName, version))
+	handler := server.NewHandler(store, fluxSyncer.ActiveContentDir, webOutDir, views)
 
 	httpServer := &http.Server{
 		Addr:         ":" + port,

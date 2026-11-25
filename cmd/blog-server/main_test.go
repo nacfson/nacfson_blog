@@ -44,7 +44,7 @@ func TestBlogServer_SmokeLogContractV3(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var logBuf bytes.Buffer
+	var logBuf, stdoutBuf bytes.Buffer
 	cmd := exec.Command(binPath)
 	cmd.Env = append(os.Environ(),
 		"PORT="+port,
@@ -53,7 +53,7 @@ func TestBlogServer_SmokeLogContractV3(t *testing.T) {
 		"WEB_OUT_DIR="+webOutDir,
 		"FLUX_ARTIFACT_URL=http://127.0.0.1:1/unreachable.tar.gz",
 	)
-	cmd.Stdout = &logBuf
+	cmd.Stdout = &stdoutBuf
 	cmd.Stderr = &logBuf
 
 	if err := cmd.Start(); err != nil {
@@ -90,6 +90,7 @@ func TestBlogServer_SmokeLogContractV3(t *testing.T) {
 	// Normal request
 	req, _ := http.NewRequest(http.MethodGet, baseURL+"/api/posts", nil)
 	req.Header.Set("traceparent", traceparent)
+	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) Firefox/133.0")
 	resp, err := client.Do(req)
 	if err != nil {
 		t.Fatalf("GET /api/posts failed: %v", err)
@@ -161,6 +162,9 @@ func TestBlogServer_SmokeLogContractV3(t *testing.T) {
 		if msg == "blog-server stopped gracefully" && lvl == "info" {
 			sawShutdown = true
 		}
+		if m["event.name"] != nil {
+			t.Fatalf("product event printed on stderr: %s", line)
+		}
 		if m["url.path"] == "/api/posts" && m["http.response.status_code"] == float64(200) {
 			sawAccess200 = true
 			if m["trace_id"] != "4bf92f3577b34da6a3ce929d0e0e4736" {
@@ -181,5 +185,18 @@ func TestBlogServer_SmokeLogContractV3(t *testing.T) {
 	if !sawStartup || !sawAccess200 || !sawError500 || !sawShutdown {
 		t.Fatalf("missing expected smoke events (startup=%v access200=%v error500=%v shutdown=%v)\nlogs:\n%s",
 			sawStartup, sawAccess200, sawError500, sawShutdown, captured)
+	}
+
+	stdoutLines := strings.Split(strings.TrimSpace(stdoutBuf.String()), "\n")
+	if len(stdoutLines) != 1 {
+		t.Fatalf("expected exactly one analytics line on stdout, got %d:\n%s", len(stdoutLines), stdoutBuf.String())
+	}
+	var view map[string]any
+	if err := json.Unmarshal([]byte(stdoutLines[0]), &view); err != nil {
+		t.Fatalf("stdout line is not JSON: %q (err=%v)", stdoutLines[0], err)
+	}
+	if view["event.name"] != "blog.analytics" || view["page.kind"] != "home" || view["level"] != "info" ||
+		view["service.version"] != expectVersion || view["trace_id"] != nil {
+		t.Fatalf("unexpected analytics line: %s", stdoutLines[0])
 	}
 }
