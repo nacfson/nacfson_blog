@@ -67,8 +67,8 @@ function PostContent() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-        <div className="space-y-4 max-w-4xl animate-pulse">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <div className="mx-auto max-w-3xl space-y-4 animate-pulse">
           <div className="h-4 w-24 bg-stone-200 rounded" />
           <div className="h-10 w-3/4 bg-stone-200 rounded" />
           <div className="h-4 w-1/2 bg-stone-200 rounded" />
@@ -104,58 +104,60 @@ function PostContent() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-      {/* Back button & Meta */}
-      <div className="mb-6 flex items-center justify-between">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-stone-500 hover:text-stone-950 hover:underline underline-offset-4 transition-colors"
-        >
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to Articles
-        </Link>
+      <div className="mx-auto max-w-3xl">
+        {/* Back button & Meta */}
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <Link
+            href="/"
+            className="inline-flex shrink-0 items-center gap-1.5 text-xs font-medium text-stone-500 hover:text-stone-950 hover:underline underline-offset-4 transition-colors"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Articles
+          </Link>
 
-        <div className="flex items-center gap-2">
-          <span className="px-2.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-white text-stone-700 border border-stone-300">
-            {topicLabel(post.topic)}
-          </span>
-          {post.project && (
-            <span className="px-2.5 py-0.5 rounded text-[10px] font-medium bg-stone-100 text-stone-600">
-              {post.project}
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <span className="px-2.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-white text-stone-700 border border-stone-300">
+              {topicLabel(post.topic)}
             </span>
+            {post.project && (
+              <span className="px-2.5 py-0.5 rounded text-[10px] font-medium bg-stone-100 text-stone-600">
+                {post.project}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Article Header */}
+        <header className="mb-8 space-y-3">
+          <div className="flex items-center gap-3 text-xs text-stone-500 font-mono">
+            <time dateTime={post.date}>{post.date}</time>
+            <span>&middot;</span>
+            <span>{post.readTimeMinutes} min read</span>
+          </div>
+
+          <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-stone-950 leading-tight">
+            {post.title}
+          </h1>
+
+          {post.summary && (
+            <p className="text-sm sm:text-base text-stone-600 leading-relaxed pt-1">
+              {post.summary}
+            </p>
           )}
+        </header>
+
+        {/* Article Body + Optional Left Sticky TOC Rail */}
+        <div className="relative">
+          <aside className="hidden xl:block xl:absolute xl:inset-y-0 xl:right-full xl:mr-8 xl:w-48">
+            <BlogV2MiniNav />
+          </aside>
+
+          <article className="max-w-none">
+            <MarkdownDispatcher markdown={post.markdownBody} />
+          </article>
         </div>
-      </div>
-
-      {/* Article Header */}
-      <header className="mb-8 max-w-4xl space-y-3">
-        <div className="flex items-center gap-3 text-xs text-stone-500 font-mono">
-          <time dateTime={post.date}>{post.date}</time>
-          <span>&middot;</span>
-          <span>{post.readTimeMinutes} min read</span>
-        </div>
-
-        <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-stone-950 leading-tight">
-          {post.title}
-        </h1>
-
-        <p className="text-sm sm:text-base text-stone-600 leading-relaxed pt-1">
-          {post.summary}
-        </p>
-      </header>
-
-      {/* Two Column Layout: MiniNav + Markdown Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Sticky TOC */}
-        <aside className="lg:col-span-3">
-          <BlogV2MiniNav />
-        </aside>
-
-        {/* Right Article Body */}
-        <article className="lg:col-span-9 max-w-none">
-          <MarkdownDispatcher markdown={post.markdownBody} />
-        </article>
       </div>
     </div>
   );
